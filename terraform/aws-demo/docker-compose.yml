@@ -1,0 +1,38 @@
+# Docker Compose for Terraform — FSI Payments Demo Mode
+#
+# Usage:
+#   docker-compose build
+#   docker-compose run --rm terraform -c "terraform init"
+#   docker-compose run --rm terraform -c "terraform apply"
+
+services:
+  terraform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: workshop-fsi-terraform:latest
+    container_name: workshop-fsi-terraform-demo
+    volumes:
+      - ../..:/workspace
+      - ~/.aws:/root/.aws-host:ro
+      - ./aws-config:/root/.aws-local
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
+      - AWS_DEFAULT_REGION
+      - AWS_HOST_CONFIG=/root/.aws-host
+      - AWS_LOCAL_CONFIG=/root/.aws-local
+      - TF_VAR_confluent_cloud_api_key
+      - TF_VAR_confluent_cloud_api_secret
+      - TF_VAR_databricks_host
+      - TF_VAR_databricks_service_principal_client_id
+      - TF_VAR_databricks_service_principal_client_secret
+      - TF_VAR_databricks_account_id
+      - TF_VAR_databricks_user_email
+      - TF_VAR_confluent_cloud_email
+      - TF_VAR_cloud_region
+      - TF_VAR_prefix
+    working_dir: /workspace/terraform/aws-demo
+    stdin_open: true
+    tty: true

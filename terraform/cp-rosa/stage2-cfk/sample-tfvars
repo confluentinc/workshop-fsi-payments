@@ -1,0 +1,10 @@
+# ===============================
+# Stage 2 — CFK / RiverPay-lite sample tfvars
+# ===============================
+# Copy to terraform.tfvars after Stage 1 + oc login.
+
+kubeconfig_path = "~/.kube/config"
+# kube_context = ""
+namespace       = "confluent"
+# cfk_chart_version = ""
+# wait_for_control_center_seconds = 120
