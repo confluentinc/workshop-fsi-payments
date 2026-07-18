@@ -1,0 +1,649 @@
+{
+  "generators": [
+    {
+      "name": "customer_profiles_seed",
+      "connection": "postgres",
+      "table": "riverpay.customer_profiles",
+      "localConfigs": {
+        "maxEvents": 100,
+        "throttleMs": 0
+      },
+      "row": {
+        "customer_id": {
+          "_gen": "sequentialString",
+          "expr": "CUST-~d",
+          "startingFrom": 100000
+        },
+        "partner_bank_id": {
+          "_gen": "oneOf",
+          "choices": [
+            "BANK-0417",
+            "BANK-0082",
+            "BANK-1103",
+            "BANK-2291",
+            "BANK-3308"
+          ]
+        },
+        "segment": {
+          "_gen": "oneOf",
+          "choices": [
+            "retail",
+            "small_business",
+            "new_partner",
+            "wealth"
+          ]
+        },
+        "account_tier": {
+          "_gen": "oneOf",
+          "choices": [
+            "standard",
+            "premium",
+            "standard",
+            "premium",
+            "standard"
+          ]
+        },
+        "home_currency": "USD",
+        "country": "US",
+        "full_name": {
+          "_gen": "string",
+          "expr": "#{Name.fullName}"
+        },
+        "tax_id": {
+          "_gen": "string",
+          "expr": "#{IdNumber.ssnValid}"
+        },
+        "date_of_birth": {
+          "_gen": "string",
+          "expr": "#{Date.birthday 'yyyy-MM-dd'}"
+        },
+        "created_at": {
+          "_gen": "now"
+        },
+        "updated_at": {
+          "_gen": "now"
+        }
+      }
+    },
+    {
+      "name": "customer_profiles",
+      "connection": "postgres",
+      "table": "riverpay.customer_profiles",
+      "localConfigs": {
+        "throttleMs": 300000
+      },
+      "row": {
+        "customer_id": {
+          "_gen": "sequentialString",
+          "expr": "CUST-~d",
+          "startingFrom": 100100
+        },
+        "partner_bank_id": {
+          "_gen": "oneOf",
+          "choices": [
+            "BANK-0417",
+            "BANK-0082",
+            "BANK-1103",
+            "BANK-2291",
+            "BANK-3308"
+          ]
+        },
+        "segment": {
+          "_gen": "oneOf",
+          "choices": [
+            "retail",
+            "small_business",
+            "new_partner",
+            "wealth"
+          ]
+        },
+        "account_tier": {
+          "_gen": "oneOf",
+          "choices": [
+            "standard",
+            "premium",
+            "standard",
+            "premium",
+            "standard"
+          ]
+        },
+        "home_currency": "USD",
+        "country": "US",
+        "full_name": {
+          "_gen": "string",
+          "expr": "#{Name.fullName}"
+        },
+        "tax_id": {
+          "_gen": "string",
+          "expr": "#{IdNumber.ssnValid}"
+        },
+        "date_of_birth": {
+          "_gen": "string",
+          "expr": "#{Date.birthday 'yyyy-MM-dd'}"
+        },
+        "created_at": {
+          "_gen": "now"
+        },
+        "updated_at": {
+          "_gen": "now"
+        }
+      }
+    },
+    {
+      "name": "payment_initiation",
+      "connection": "kafka",
+      "topic": "riverflow.payments.initiation",
+      "vars": {
+        "payment_id": {
+          "_gen": "sequentialString",
+          "expr": "PMT-~d",
+          "startingFrom": 202607110000
+        },
+        "customer_id": {
+          "_gen": "lookup",
+          "name": "customer_profiles_seed",
+          "path": [
+            "row",
+            "customer_id"
+          ]
+        },
+        "source_account": {
+          "_gen": "sequentialString",
+          "expr": "ACC-~d",
+          "startingFrom": 88000000
+        },
+        "destination_account": {
+          "_gen": "sequentialString",
+          "expr": "ACC-~d",
+          "startingFrom": 55000000
+        },
+        "amount": {
+          "_gen": "uniformDistribution",
+          "bounds": [
+            25,
+            15000
+          ],
+          "decimals": 2
+        },
+        "channel": {
+          "_gen": "oneOf",
+          "choices": [
+            "mobile_app",
+            "online_banking",
+            "partner_api"
+          ]
+        }
+      },
+      "key": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "payment_id"
+        }
+      },
+      "value": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "payment_id"
+        },
+        "customer_id": {
+          "_gen": "var",
+          "var": "customer_id"
+        },
+        "source_account": {
+          "_gen": "var",
+          "var": "source_account"
+        },
+        "destination_account": {
+          "_gen": "var",
+          "var": "destination_account"
+        },
+        "amount": {
+          "_gen": "var",
+          "var": "amount"
+        },
+        "currency": "USD",
+        "payment_type": "instant_credit_transfer",
+        "channel": {
+          "_gen": "var",
+          "var": "channel"
+        },
+        "initiated_at": {
+          "_gen": "now"
+        },
+        "status": "initiated"
+      },
+      "localConfigs": {
+        "throttleMs": 1500,
+        "avroSchemaHint": {
+          "key": {
+            "type": "record",
+            "name": "PaymentInitiationKey",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              }
+            ]
+          },
+          "value": {
+            "type": "record",
+            "name": "PaymentInitiation",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              },
+              {
+                "name": "customer_id",
+                "type": "string"
+              },
+              {
+                "name": "source_account",
+                "type": "string"
+              },
+              {
+                "name": "destination_account",
+                "type": "string"
+              },
+              {
+                "name": "amount",
+                "type": "double"
+              },
+              {
+                "name": "currency",
+                "type": "string"
+              },
+              {
+                "name": "payment_type",
+                "type": "string"
+              },
+              {
+                "name": "channel",
+                "type": "string"
+              },
+              {
+                "name": "initiated_at",
+                "type": {
+                  "type": "long",
+                  "logicalType": "timestamp-millis"
+                }
+              },
+              {
+                "name": "status",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "payment_authorization",
+      "connection": "kafka",
+      "topic": "riverflow.payments.authorization",
+      "fork": {
+        "key": {
+          "_gen": "lookup",
+          "name": "payment_initiation",
+          "path": [
+            "value"
+          ]
+        },
+        "oneTimeKeys": true,
+        "stagger": {
+          "ms": 400
+        }
+      },
+      "key": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        }
+      },
+      "value": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        },
+        "customer_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "customer_id"
+          ]
+        },
+        "authorization_code": {
+          "_gen": "string",
+          "expr": "AUTH-#{bothify '??????'}"
+        },
+        "validation_result": "passed",
+        "authorized_at": {
+          "_gen": "now"
+        },
+        "status": "authorized"
+      },
+      "localConfigs": {
+        "maxEvents": 1,
+        "avroSchemaHint": {
+          "key": {
+            "type": "record",
+            "name": "PaymentAuthorizationKey",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              }
+            ]
+          },
+          "value": {
+            "type": "record",
+            "name": "PaymentAuthorization",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              },
+              {
+                "name": "customer_id",
+                "type": "string"
+              },
+              {
+                "name": "authorization_code",
+                "type": "string"
+              },
+              {
+                "name": "validation_result",
+                "type": "string"
+              },
+              {
+                "name": "authorized_at",
+                "type": {
+                  "type": "long",
+                  "logicalType": "timestamp-millis"
+                }
+              },
+              {
+                "name": "status",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "payment_balance_update",
+      "connection": "kafka",
+      "topic": "riverflow.payments.balance_update",
+      "fork": {
+        "key": {
+          "_gen": "lookup",
+          "name": "payment_initiation",
+          "path": [
+            "value"
+          ]
+        },
+        "oneTimeKeys": true,
+        "stagger": {
+          "ms": 800
+        }
+      },
+      "key": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        }
+      },
+      "value": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        },
+        "customer_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "customer_id"
+          ]
+        },
+        "source_account": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "source_account"
+          ]
+        },
+        "destination_account": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "destination_account"
+          ]
+        },
+        "amount": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "amount"
+          ]
+        },
+        "currency": "USD",
+        "source_balance_after": {
+          "_gen": "uniformDistribution",
+          "bounds": [
+            500,
+            20000
+          ],
+          "decimals": 2
+        },
+        "destination_balance_after": {
+          "_gen": "uniformDistribution",
+          "bounds": [
+            500,
+            20000
+          ],
+          "decimals": 2
+        },
+        "updated_at": {
+          "_gen": "now"
+        },
+        "status": "balance_updated"
+      },
+      "localConfigs": {
+        "maxEvents": 1,
+        "avroSchemaHint": {
+          "key": {
+            "type": "record",
+            "name": "PaymentBalanceUpdateKey",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              }
+            ]
+          },
+          "value": {
+            "type": "record",
+            "name": "PaymentBalanceUpdate",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              },
+              {
+                "name": "customer_id",
+                "type": "string"
+              },
+              {
+                "name": "source_account",
+                "type": "string"
+              },
+              {
+                "name": "destination_account",
+                "type": "string"
+              },
+              {
+                "name": "amount",
+                "type": "double"
+              },
+              {
+                "name": "currency",
+                "type": "string"
+              },
+              {
+                "name": "source_balance_after",
+                "type": "double"
+              },
+              {
+                "name": "destination_balance_after",
+                "type": "double"
+              },
+              {
+                "name": "updated_at",
+                "type": {
+                  "type": "long",
+                  "logicalType": "timestamp-millis"
+                }
+              },
+              {
+                "name": "status",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "payment_status",
+      "connection": "kafka",
+      "topic": "riverflow.payments.status",
+      "fork": {
+        "key": {
+          "_gen": "lookup",
+          "name": "payment_initiation",
+          "path": [
+            "value"
+          ]
+        },
+        "oneTimeKeys": true,
+        "stagger": {
+          "ms": 1200
+        }
+      },
+      "key": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        }
+      },
+      "value": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        },
+        "customer_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "customer_id"
+          ]
+        },
+        "status": "completed",
+        "status_reason": "settlement_confirmed",
+        "completed_at": {
+          "_gen": "now"
+        }
+      },
+      "localConfigs": {
+        "maxEvents": 1,
+        "avroSchemaHint": {
+          "key": {
+            "type": "record",
+            "name": "PaymentStatusKey",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              }
+            ]
+          },
+          "value": {
+            "type": "record",
+            "name": "PaymentStatus",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              },
+              {
+                "name": "customer_id",
+                "type": "string"
+              },
+              {
+                "name": "status",
+                "type": "string"
+              },
+              {
+                "name": "status_reason",
+                "type": "string"
+              },
+              {
+                "name": "completed_at",
+                "type": {
+                  "type": "long",
+                  "logicalType": "timestamp-millis"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "schedule": {
+    "stages": [
+      {
+        "generators": [
+          "customer_profiles_seed"
+        ]
+      },
+      {
+        "generators": [
+          "customer_profiles",
+          "payment_initiation",
+          "payment_authorization",
+          "payment_balance_update",
+          "payment_status"
+        ]
+      }
+    ]
+  },
+  "connections": {}
+}
