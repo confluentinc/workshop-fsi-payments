@@ -72,7 +72,7 @@ variable "initial_wait_seconds" {
 variable "table_include_list" {
   description = "Comma-separated list of PostgreSQL tables to capture via CDC"
   type        = string
-  default     = "riverpay.customer_profiles"
+  default     = "riverpay.customer_profiles,riverpay.fx_rates"
 }
 
 variable "topic_prefix" {

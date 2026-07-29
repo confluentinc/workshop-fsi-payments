@@ -75,8 +75,8 @@ fraud score.
 ### Three questions the demo answers
 
 1. Which RiverFlow payments are most likely to need manual intervention right now?
-2. Which customers drive the highest operational exception exposure in the last 7 days?
-3. What is the RiverFlow lifecycle completion rate from initiation to completed status? (Phase 1 proxy; stall drill-down is Phase 2)
+2. Which customers drive the highest operational exception exposure in the last 24 hours?
+3. What is the RiverFlow lifecycle completion rate from initiation to completed status? (Phase 1 proxy: completed = 4-way join + FX enrichment; stall drill-down is Phase 2)
 
 ---
 

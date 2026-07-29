@@ -6,7 +6,7 @@ Focused on ROSA HCP + CFK + Control Center. For the Confluent Cloud / Databricks
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| `RHCS_TOKEN` / rhcs provider auth errors | Missing or expired OCM token | Re-copy token from [console.redhat.com/openshift/token/rosa](https://console.redhat.com/openshift/token/rosa); `export RHCS_TOKEN=...` |
+| `RHCS_TOKEN` / rhcs provider auth errors | Missing or expired OCM token | Re-copy token from [console.redhat.com/openshift/token/rosa](https://console.redhat.com/openshift/token/rosa); `export RHCS_TOKEN=...` (PowerShell: `$env:RHCS_TOKEN = "..."`) |
 | Stage 1 fails on account/operator roles | ROSA not enabled / IAM permissions | Complete [ROSA getting started](https://console.redhat.com/openshift/create/rosa/getstarted); ensure IAM create-role permissions |
 | Stage 1 hangs a long time | Normal for ROSA create | Wait 30–45+ min; check OCM console cluster status |
 | `oc login` certificate / unreachable API | Wrong URL, private cluster, or still provisioning | Re-check `cluster_api_url` and `cluster_state`; wait until ready |
@@ -20,8 +20,17 @@ Focused on ROSA HCP + CFK + Control Center. For the Confluent Cloud / Databricks
 
 ### Provider / token
 
+macOS / Linux / Git Bash:
+
 ```sh
 echo "token length: ${#RHCS_TOKEN}"
+terraform -chdir=terraform/cp-rosa/stage1-rosa providers
+```
+
+Windows (PowerShell):
+
+```powershell
+echo "token length: $($env:RHCS_TOKEN.Length)"
 terraform -chdir=terraform/cp-rosa/stage1-rosa providers
 ```
 
@@ -36,9 +45,18 @@ terraform -chdir=terraform/cp-rosa/stage1-rosa output cluster_id
 
 ### Workers not Ready
 
+macOS / Linux / Git Bash:
+
 ```sh
 oc get nodes
 oc get events -A --sort-by='.lastTimestamp' | tail -40
+```
+
+Windows (PowerShell — no `tail`; use `Select-Object -Last`):
+
+```powershell
+oc get nodes
+oc get events -A --sort-by='.lastTimestamp' | Select-Object -Last 40
 ```
 
 ## Stage 2 (CFK / CP)
@@ -83,9 +101,18 @@ If the local port is busy: `kubectl -n confluent port-forward controlcenter-0 19
 
 ### Optional route
 
+macOS / Linux / Git Bash:
+
 ```sh
 oc -n confluent get routes
 oc -n confluent get controlcenter controlcenter -o yaml | less
+```
+
+Windows (PowerShell — no `less`; use `more` as a pager):
+
+```powershell
+oc -n confluent get routes
+oc -n confluent get controlcenter controlcenter -o yaml | more
 ```
 
 Prefer port-forward if the route endpoint is empty or browsers show certificate errors during a live demo.

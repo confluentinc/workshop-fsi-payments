@@ -84,21 +84,22 @@ Useful if the facilitator script wants a "who are we solving this for" beat:
 |---|---|
 | Customer profile (Postgres → CDC) | RiverPay's partner-bank end customers: `customer_id`, `segment`, `account_tier`, `home_currency`, `country`. |
 | Payment event (Kafka lifecycle topics) | A RiverFlow instant payment moving through initiation → authorization → balance update → status. |
-| `risk_score` / `risk_reason` (Flink temporal join) | RiverPulse's operational exception signal — "how likely is Dana's team going to need to touch this payment." |
-| Tableflow append + upsert tables | The trusted data products behind RiverPulse. |
+| `risk_score` / `risk_reason` (Flink profile TTJ + external risk UDF) | RiverPulse's operational exception signal — "how likely is Dana's team going to need to touch this payment." |
+| FX rates (Postgres → CDC → Flink temporal join) | Mid-market USD cross rates so completed payments carry `amount_usd`. |
+| Tableflow append + upsert tables (+ data TTL) | The trusted data products behind RiverPulse, with retention bounds for right-to-forget. |
 | Databricks Genie | The natural-language front end of RiverPulse — Dana or Marcus just asks a question instead of waiting on a report. |
-| Three business questions (plan_v2) | Reframed as: *"Which RiverFlow payments need Dana's team right now? Which partner-bank customers are driving the most exposure this week? Where in the lifecycle are payments stalling?"* |
+| Three business questions (plan_v2) | Reframed as: *"Which RiverFlow payments need Dana's team right now? Which partner-bank customers are driving the most exposure in the last 24 hours? What share completed the full lifecycle (with FX)?"* |
 
 ## Guardrails
 
-- Stay inside the current Phase 1 scope in `plan_v2.md` (proposed, pending
-  FSI team review): happy path only, single currency, generic instant-payments
-  rail, light PII + CSFLE talking point only. This narrative doesn't imply
-  any scope expansion.
+- Stay inside the current Phase 1 scope in `AGENTS.md` / `plan_v2.md`: happy
+  path only (no NSF/fraud/DLQ yet), **multi-currency** with FX rates CDC +
+  temporal join (USD + GBP/AUD/CAD/JPY/EUR), generic instant-payments rail,
+  light PII + CSFLE talking point only, external risk UDF + Tableflow TTL
+  talking point. Instructor-led Elevate is in scope alongside aws-demo.
 - Don't describe RiverFlow as literally FedNow or RTP — it "maps to" that
   style of rail, matching the existing locked narrative language, to avoid
   implying RiverPay is a real, certified rail participant.
 - If this narrative gets adopted, the deck/script/runbook/labs should use
-  RiverPay/RiverFlow/RiverPulse (and personas as needed). Demo-mode labs,
-  README, deck, facilitator script, and Phase 1 runbook have been updated
-  accordingly; keep them consistent when editing.
+  RiverPay/RiverFlow/RiverPulse (and personas as needed). Keep them consistent
+  when editing.

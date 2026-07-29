@@ -26,7 +26,7 @@ Complete **[LAB 2](../LAB2_deploy_and_observe/LAB2.md)**. Have `demo_status.data
 Use the prompts from [`sql/genie_prompts.md`](../../../sql/genie_prompts.md):
 
 1. **Which payments are most likely to need manual intervention right now?**
-2. **Which customers drive the highest operational exception exposure in the last 7 days?**
+2. **Which customers drive the highest operational exception exposure in the last 24 hours?**
 3. **What is the RiverFlow lifecycle completion rate from initiation to completed status?**
 
 > [!NOTE]
@@ -34,8 +34,9 @@ Use the prompts from [`sql/genie_prompts.md`](../../../sql/genie_prompts.md):
 >
 > Answers cite `risk_score` / `risk_reason` for (1)–(2). For (3), expect
 > `initiated_enriched`, `completed`, and `completion_rate` (Phase 1 proxy:
-> completed / initiated_enriched). Stall / “stuck at stage X” drill-down is
-> Phase 2 backlog — do not oversell it in Phase 1.
+> completed = 4-way join + FX enrichment / initiated_enriched). Stall /
+> “stuck at stage X” drill-down is Phase 2 backlog — do not oversell it in
+> Phase 1.
 >
 > Remember: `risk_score` is operational exception probability, **not** fraud.
 
@@ -54,7 +55,7 @@ Replace `<catalog>` and `<schema>` with values from `demo_status`:
 
 ```sql
 SELECT * FROM <catalog>.<schema>.riverpulse_high_risk_payments LIMIT 20;
-SELECT * FROM <catalog>.<schema>.riverpulse_customer_risk_7d LIMIT 20;
+SELECT * FROM <catalog>.<schema>.riverpulse_customer_risk_24h LIMIT 20;
 SELECT * FROM <catalog>.<schema>.riverpulse_lifecycle_completion;
 ```
 

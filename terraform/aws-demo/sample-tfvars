@@ -22,3 +22,9 @@ databricks_service_principal_client_secret = ""
 
 # Uncomment if your Databricks SQL warehouse name differs from the default:
 # databricks_sql_warehouse_name = "Serverless Starter Warehouse"
+
+# --- Risk UDF (default ON — needs JAR in udf/riverpay-risk/dist/) ---
+# enable_risk_api = true
+# enable_risk_udf = true
+# risk_api_key    = "riverpay-workshop-risk"
+# risk_udf_jar_path = "../../udf/riverpay-risk/dist/riverpay-risk-udf-1.0.0.jar"

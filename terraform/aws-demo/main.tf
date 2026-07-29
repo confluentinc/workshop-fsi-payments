@@ -27,6 +27,7 @@ locals {
   iam_role_name = "${local.prefix}-unified-role-${local.resource_suffix}"
 
   customer_profiles_topic = "riverflow.riverpay.customer_profiles"
+  fx_rates_topic          = "riverflow.riverpay.fx_rates"
   initiation_topic        = "riverflow.payments.initiation"
   authorization_topic     = "riverflow.payments.authorization"
   balance_update_topic    = "riverflow.payments.balance_update"
@@ -430,13 +431,22 @@ module "flink_payments" {
   flink_rest_endpoint        = module.flink.flink_rest_endpoint
 
   customer_profiles_topic = local.customer_profiles_topic
+  fx_rates_topic          = local.fx_rates_topic
   initiation_topic        = local.initiation_topic
   authorization_topic     = local.authorization_topic
   balance_update_topic    = local.balance_update_topic
   status_topic            = local.status_topic
   payments_table_name     = local.payments_topic
   risk_score_table_name   = local.risk_score_topic
-  schema_generation       = "avro-v3-rowtime"
+  schema_generation       = "avro-v5-risk-udf"
+
+  cloud        = "AWS"
+  cloud_region = var.cloud_region
+
+  enable_risk_udf   = var.enable_risk_udf
+  risk_api_endpoint = var.enable_risk_udf ? "http://${module.postgres.public_dns}:8089" : ""
+  risk_api_key      = var.risk_api_key
+  risk_udf_jar_path = "${path.module}/${var.risk_udf_jar_path}"
 
   # Wait until CDC + Avro lifecycle schemas exist, then brief catalog settle
   depends_on = [
@@ -444,6 +454,7 @@ module "flink_payments" {
     module.topics,
     null_resource.wait_for_schemas,
     time_sleep.wait_for_data,
+    null_resource.risk_api_deploy,
   ]
 }
 

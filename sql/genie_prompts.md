@@ -11,18 +11,26 @@ data products / `riverpulse_*` views.
 **Prompt:** Which payments are most likely to need manual intervention right now?
 
 **Expected shape:** Rows ordered by `risk_score` descending with `payment_id`,
-`customer_id`, `amount`, `risk_score`, and human-readable `risk_reason`.
+`customer_id`, `amount` (and `amount_usd` / `currency` when asking about FX),
+`risk_score`, and human-readable `risk_reason`.
 
 **View shortcut:** `SELECT * FROM riverpulse_high_risk_payments LIMIT 20;`
 
-## 2. Highest-risk customers (last 7 days)
+Optional FX-oriented prompt: *Which completed payments have the largest USD-normalized amounts right now?* Expect `amount`, `currency`, `amount_usd` from `riverflow_payments`.
 
-**Prompt:** Which customers drive the highest operational exception exposure in the last 7 days?
+## 2. Highest-risk customers (last 24 hours)
+
+**Prompt:** Which customers drive the highest operational exception exposure in the last 24 hours?
 
 **Expected shape:** Customers ranked by average or max `risk_score`, with
 `payment_count`, `segment`, and `account_tier`.
 
-**View shortcut:** `SELECT * FROM riverpulse_customer_risk_7d LIMIT 20;`
+**View shortcut:** `SELECT * FROM riverpulse_customer_risk_24h LIMIT 20;`
+
+> **Facilitator note:** Instructor-led stacks are typically provisioned 6–12 hours
+> before the session, so the 24-hour window usually has real traffic. Short
+> self-service / demo runs still return rows — all workshop data falls inside
+> the window.
 
 ## 3. Lifecycle completion rate
 
@@ -30,7 +38,9 @@ data products / `riverpulse_*` views.
 
 **Expected shape:** `initiated_enriched`, `completed`, and `completion_rate`
 (completed / initiated_enriched). Phase 1 uses risk_score rows as the
-initiation proxy and `riverflow_payments` as fully completed (4-way inner join).
+initiation proxy and `riverflow_payments` as fully completed (**4-way inner
+join + FX temporal join**). Missing FX rates can exclude an otherwise complete
+lifecycle from `completed`.
 
 **View shortcut:** `SELECT * FROM riverpulse_lifecycle_completion;`
 
@@ -40,5 +50,6 @@ initiation proxy and `riverflow_payments` as fully completed (4-way inner join).
 ## Facilitator notes
 
 - `risk_score` is **operational exception probability**, not fraud.
-- Happy path only — `riverflow_payments` only contains fully completed payments.
+- Happy path only — `riverflow_payments` only contains fully completed payments (with FX enrichment: `rate_to_usd`, `amount_usd`).
+- Judge Genie by answer *shape*, not brittle golden rows.
 - If Genie returns empty results, wait for Tableflow sync and confirm both Flink MTs have data.

@@ -4,8 +4,8 @@ Illustrative JSON payloads for every topic and table in the Phase 1 data
 model (`fsi_payments_workshop_plan_v2.md` / `fsi_payments_workshop_phase1_runbook.md`),
 using the RiverPay/RiverFlow narrative from `USECASE.md`. All examples follow
 one payment end-to-end so the lifecycle and the Flink enrichment are easy to
-trace. Happy path only, single currency (USD), flattened Avro records — consistent
-with Phase 1 scope.
+trace. Happy path, multi-currency (USD + GBP/AUD/CAD/JPY/EUR), flattened Avro
+records — consistent with Phase 1 scope.
 
 Topic/table names below are **formalized** in the runbook and `AGENTS.md`.
 
@@ -39,6 +39,25 @@ under CSFLE (ciphertext placeholder), which is the brief talking point, not
 a full walkthrough. The CDC connector uses `after.state.only=true`, so Kafka
 records are flat Avro payloads (no Debezium envelope) matching this shape.
 
+## FX rates (Postgres → CDC)
+
+Source table: `riverpay.fx_rates` · CDC topic: `riverflow.riverpay.fx_rates`
+
+Seeded currencies: `USD` (always `1.0`), `GBP`, `AUD`, `CAD`, `JPY`, `EUR`.
+ShadowTraffic updates a random foreign currency about every 5 seconds; roughly
+one in three ticks re-applies the mid-market mean (no visible rate change).
+
+```json
+{
+  "currency_code": "EUR",
+  "rate_to_usd": 1.0842,
+  "updated_at": 1730538725000
+}
+```
+
+`updated_at` is epoch millis. Flink temporal joins use Kafka `$rowtime` on the
+CDC topic (`FOR SYSTEM_TIME AS OF` payment initiation time).
+
 ## Payment lifecycle events
 
 Same `payment_id` across all four lifecycle-specific topics, one event per
@@ -53,7 +72,7 @@ stage. `customer_id` ties every stage back to the profile above.
   "source_account": "ACC-88213340",
   "destination_account": "ACC-55019284",
   "amount": 482.50,
-  "currency": "USD",
+  "currency": "EUR",
   "payment_type": "instant_credit_transfer",
   "channel": "mobile_app",
   "initiated_at": "2026-07-11T14:02:07.331Z",
@@ -83,7 +102,7 @@ stage. `customer_id` ties every stage back to the profile above.
   "source_account": "ACC-88213340",
   "destination_account": "ACC-55019284",
   "amount": 482.50,
-  "currency": "USD",
+  "currency": "EUR",
   "source_balance_after": 3117.42,
   "destination_balance_after": 9820.10,
   "updated_at": "2026-07-11T14:02:08.980Z",
@@ -103,11 +122,11 @@ stage. `customer_id` ties every stage back to the profile above.
 }
 ```
 
-### Completed payments — Flink 4-way inner join → `riverflow_payments` (append)
+### Completed payments — Flink 4-way inner join + FX TTJ → `riverflow_payments` (append)
 
 Emits **only** when initiation, authorization, balance update, and status all
-match on `payment_id` (happy-path completed payments). Progressive / stall-aware
-state is Phase 2 backlog.
+match on `payment_id` (happy-path completed payments), enriched with the FX rate
+in effect at initiation time. Progressive / stall-aware state is Phase 2 backlog.
 
 ```json
 {
@@ -116,7 +135,9 @@ state is Phase 2 backlog.
   "source_account": "ACC-88213340",
   "destination_account": "ACC-55019284",
   "amount": 482.50,
-  "currency": "USD",
+  "currency": "EUR",
+  "rate_to_usd": 1.0842,
+  "amount_usd": 523.13,
   "payment_type": "instant_credit_transfer",
   "channel": "mobile_app",
   "initiated_at": "2026-07-11T14:02:07.331Z",
@@ -134,8 +155,11 @@ state is Phase 2 backlog.
 ## Derived risk output (Flink temporal join → Tableflow upsert)
 
 Compacted / upsert table: `riverflow_payments_risk_score`. `risk_score`
-is operational exception probability (0–1), not a fraud score — three
-examples showing the range of `risk_reason` values:
+is operational exception probability (0–1), not a fraud score. The scoring
+logic (Flink CASE fallback, external UDF, and the Risk Scoring API all agree)
+only ever emits one of six fixed `(risk_score, risk_reason)` pairs — see
+`flink/risk_score.sql` / `services/risk-api/app.py`. Three examples showing
+the range:
 
 ```json
 {
@@ -149,8 +173,8 @@ examples showing the range of `risk_reason` values:
 ```json
 {
   "payment_id": "PMT-2026071100438509",
-  "risk_score": 0.61,
-  "risk_reason": "first_transfer_to_new_destination_account",
+  "risk_score": 0.72,
+  "risk_reason": "high_value_standard_tier",
   "enrichment_timestamp": "2026-07-11T14:03:44.117Z"
 }
 ```
@@ -158,7 +182,7 @@ examples showing the range of `risk_reason` values:
 ```json
 {
   "payment_id": "PMT-2026071100439012",
-  "risk_score": 0.83,
+  "risk_score": 0.85,
   "risk_reason": "amount_significantly_above_customer_baseline",
   "enrichment_timestamp": "2026-07-11T14:05:12.556Z"
 }
@@ -175,9 +199,10 @@ Phase 1 Tableflow publishes **only** Flink data products:
 | payment_id | risk_score | risk_reason | enrichment_timestamp |
 |---|---|---|---|
 | PMT-2026071100438291 | 0.12 | low_value_established_recipient | 2026-07-11T14:02:10.002Z |
-| PMT-2026071100438509 | 0.61 | first_transfer_to_new_destination_account | 2026-07-11T14:03:44.117Z |
-| PMT-2026071100439012 | 0.83 | amount_significantly_above_customer_baseline | 2026-07-11T14:05:12.556Z |
+| PMT-2026071100438509 | 0.72 | high_value_standard_tier | 2026-07-11T14:03:44.117Z |
+| PMT-2026071100439012 | 0.85 | amount_significantly_above_customer_baseline | 2026-07-11T14:05:12.556Z |
 
 RiverPulse Genie views: `riverpulse_high_risk_payments`,
-`riverpulse_customer_risk_7d`, `riverpulse_lifecycle_completion`
-(completion rate = completed / initiated_enriched; stall drill-down is Phase 2).
+`riverpulse_customer_risk_24h`, `riverpulse_lifecycle_completion`
+(completion rate = completed / initiated_enriched where completed includes FX enrichment;
+stall drill-down is Phase 2).

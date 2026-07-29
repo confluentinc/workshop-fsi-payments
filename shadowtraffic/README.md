@@ -1,15 +1,31 @@
 # ShadowTraffic — RiverPay generators
 
-[`riverpay-generator.json`](riverpay-generator.json) defines:
+## Configs
+
+| File | Use |
+|------|-----|
+| [`riverpay-generator.json`](riverpay-generator.json) | **aws-demo** full pipeline (Postgres profiles/FX + Kafka lifecycle) |
+| [`riverpay-generator-postgres.json`](riverpay-generator-postgres.json) | **azure-shared** — profiles seed/updates + FX only (CDC fan-out) |
+| [`riverpay-generator-kafka.json`](riverpay-generator-kafka.json) | **azure per-attendee** — lifecycle topics only (`customer_id` from `CUST-100000`…`099`) |
+
+### Full generator (`riverpay-generator.json`)
 
 1. **Stage 1** — seed ~100 rows into Postgres `riverpay.customer_profiles`
 2. **Stage 2** — emit correlated payment lifecycle events to Kafka:
    - `payment_initiation` — new `PMT-*` events (customer_id via named lookup of `customer_profiles_seed`)
    - `payment_authorization` / `payment_balance_update` / `payment_status` — each **forks once** on the initiation value (`oneTimeKeys` + `maxEvents: 1`) so the same `payment_id` appears on all four topics
+3. Also updates `riverpay.fx_rates` (~5s) on Postgres
 
 Do **not** put per-state `avroSchemaHint`s inside a single `stateMachine` that switches Kafka topics — ShadowTraffic deep-merges those hints and Avro serialization fails.
 
-Connections are injected at deploy time by Terraform (`terraform/aws-demo/shadowtraffic.tf`) from live Postgres + Confluent credentials. The ShadowTraffic free-trial license is fetched automatically via HTTP. Do not commit secrets into this folder.
+Connections are injected at deploy time by Terraform from live Postgres and/or Confluent credentials. The ShadowTraffic free-trial license is fetched automatically via HTTP. Do not commit secrets into this folder.
+
+## Elevate fan-out
+
+```
+azure-shared ST (postgres) ──► shared Postgres ──► per-attendee CDC ──► each Kafka
+azure/ ST (kafka)           ─────────────────────► that attendee's lifecycle topics
+```
 
 ## Local dry-run
 
@@ -47,7 +63,7 @@ jq '
 docker run --rm \
   --env-file /tmp/shadow-traffic-license.env \
   -v /tmp/riverpay-config-sample.json:/home/config.json:ro \
-  shadowtraffic/shadowtraffic:latest \
+  shadowtraffic/shadowtraffic:2.0.3 \
   --config /home/config.json \
   --stdout --sample 40
 ```

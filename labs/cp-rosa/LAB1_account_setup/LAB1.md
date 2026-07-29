@@ -45,11 +45,19 @@ aws configure get region
 2. Copy the offline token
 3. Export it in your shell (do not commit it):
 
+   macOS / Linux / Git Bash:
+
    ```sh
    export RHCS_TOKEN="<paste-token>"
    ```
 
-**Expected result:** `echo $RHCS_TOKEN` shows a long token string (keep it secret).
+   Windows (PowerShell):
+
+   ```powershell
+   $env:RHCS_TOKEN = "<paste-token>"
+   ```
+
+**Expected result:** `echo $RHCS_TOKEN` (PowerShell: `echo $env:RHCS_TOKEN`) shows a long token string (keep it secret).
 
 ### Step 4: Create Stage 1 `terraform.tfvars`
 
@@ -69,9 +77,18 @@ Edit `terraform.tfvars`:
 
 ### Step 5: Quick sanity check
 
+macOS / Linux / Git Bash:
+
 ```sh
 test -n "$RHCS_TOKEN" && echo "RHCS_TOKEN is set"
 grep -E 'cluster_name|aws_region|owner_email' terraform.tfvars
+```
+
+Windows (PowerShell):
+
+```powershell
+if ($env:RHCS_TOKEN) { "RHCS_TOKEN is set" }
+Select-String -Pattern 'cluster_name|aws_region|owner_email' terraform.tfvars
 ```
 
 **Expected result:** Token is set; tfvars shows your edited values (no empty `cluster_name`).

@@ -153,7 +153,7 @@ variable "allowed_cidr_blocks" {
 
 variable "table_include_list" {
   type    = string
-  default = "riverpay.customer_profiles"
+  default = "riverpay.customer_profiles,riverpay.fx_rates"
 }
 
 variable "enable_shadowtraffic" {
@@ -162,11 +162,37 @@ variable "enable_shadowtraffic" {
 }
 
 variable "shadowtraffic_image" {
-  type    = string
-  default = "shadowtraffic/shadowtraffic:latest"
+  type        = string
+  description = "ShadowTraffic Docker image (pin 2.x for workshop reproducibility)"
+  default     = "shadowtraffic/shadowtraffic:2.0.3"
 }
 
 variable "shadowtraffic_ssh_username" {
   type    = string
   default = "ec2-user"
+}
+
+variable "enable_risk_api" {
+  description = "Deploy shared Risk Scoring API on the Postgres EC2 host (port 8089)"
+  type        = bool
+  default     = true
+}
+
+variable "risk_api_key" {
+  description = "Bearer API key for the Risk Scoring API / Flink REST CONNECTION"
+  type        = string
+  sensitive   = true
+  default     = "riverpay-workshop-risk"
+}
+
+variable "enable_risk_udf" {
+  description = "Upload Flink UDF artifact and score risk via external API (requires built JAR in dist/)"
+  type        = bool
+  default     = true
+}
+
+variable "risk_udf_jar_path" {
+  description = "Path to riverpay-risk-udf JAR (build via udf/riverpay-risk/README.md)"
+  type        = string
+  default     = "../../udf/riverpay-risk/dist/riverpay-risk-udf-1.0.0.jar"
 }

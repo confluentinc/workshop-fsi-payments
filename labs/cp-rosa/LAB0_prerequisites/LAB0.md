@@ -40,7 +40,7 @@ You will configure these in LAB 1:
 <summary>Install on macOS (Homebrew)</summary>
 
 ```sh
-brew install git terraform awscli kubernetes helm
+brew install git terraform awscli kubernetes-cli helm
 brew install openshift-cli   # provides `oc`; formula name may vary
 ```
 

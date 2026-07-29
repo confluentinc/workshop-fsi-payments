@@ -2,6 +2,8 @@
 
 Hands-on path for the **demo-mode** workshop. Start from the [root README](../../README.md) for architecture and narrative, then work through LAB0–LAB4 in order.
 
+> Instructor-led (Azure) uses a separate path: [`labs/instructor-led/`](../instructor-led/README.md). Demo labs still apply the full AWS pipeline; after apply you should see FX CDC, USD-normalized completed payments, and risk scores from the external UDF (`enable_risk_udf=true` by default).
+
 | Lab | Goal | Time |
 |-----|------|------|
 | [LAB 0 — Prerequisites](LAB0_prerequisites/LAB0.md) | Accounts, Git, Docker image | ~10 min |
@@ -15,5 +17,4 @@ Hands-on path for the **demo-mode** workshop. Start from the [root README](../..
 - [Troubleshooting](../shared/troubleshooting.md)
 - [Recap / talking points](../shared/recap.md)
 - Genie prompts: [`sql/genie_prompts.md`](../../sql/genie_prompts.md)
-
 **Facilitators:** prefer a completed LAB2 apply before the live session so attendees focus on observe + Genie. Speaker notes: [`context/fsi_payments_workshop_facilitator_script.md`](../../context/fsi_payments_workshop_facilitator_script.md).

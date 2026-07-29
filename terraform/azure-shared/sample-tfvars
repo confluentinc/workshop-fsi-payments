@@ -1,0 +1,17 @@
+# RiverPay azure-shared sample tfvars
+owner_email = "you@confluent.io"
+cloud_region = "eastus2"
+prefix = "riverpay-shared"
+resource_group_name = "riverpay-shared-rg"
+account_count = 40
+
+# Databricks (shared workspace)
+# databricks_host = "https://adb-xxxx.azuredatabricks.net"
+# databricks_service_principal_client_id = ""
+# databricks_service_principal_client_secret = ""
+
+enable_risk_api = true
+risk_api_key = "riverpay-workshop-risk"
+# Requires Azure CLI (`az login`) on the apply host for `az acr build`
+enable_shadowtraffic = true
+# enable_monitoring = false

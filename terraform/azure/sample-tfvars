@@ -1,0 +1,62 @@
+# ===============================
+# General Overrides
+# ===============================
+prefix       = ""
+cloud_region = "eastus2"
+
+# ===============================
+# Azure Overrides
+# ===============================
+# These default to null and fall back to ARM_SUBSCRIPTION_ID / ARM_TENANT_ID
+# env vars (set via `az login` or service principal env vars). Uncomment and
+# fill in to set them explicitly via tfvars instead.
+# azure_subscription_id = ""
+# azure_tenant_id       = ""
+
+# ===============================
+# Confluent Cloud Overrides
+# ===============================
+confluent_cloud_email      = ""  # Your Confluent Cloud account email (must match an existing org user)
+confluent_cloud_api_key    = ""
+confluent_cloud_api_secret = ""
+
+# ===============================
+# Databricks Overrides
+# ===============================
+# Leave databricks_host blank to auto-provision a new workspace.
+# Or provide your existing Azure Databricks workspace URL.
+databricks_host                            = ""  # e.g., https://adb-1234567890.12.azuredatabricks.net
+databricks_account_id                      = ""
+databricks_user_email                      = ""
+databricks_service_principal_client_id     = ""
+databricks_service_principal_client_secret = ""
+
+# Uncomment and set if your Databricks workspace uses a different SQL warehouse name:
+# databricks_sql_warehouse_name = "Serverless Starter Warehouse"
+
+# ===============================
+# Optional: PostgreSQL Overrides
+# ===============================
+# postgres_sku_name  = "B_Standard_B2s"  # Burstable tier (cost-effective for workshop)
+# postgres_storage_mb = 32768
+
+# ===============================
+# Self-service (leave shared_* empty) OR instructor-led (fill shared_* from azure-shared)
+# ===============================
+# Self-service BYO:
+#   enable_shadowtraffic = true   # full ST on datagen VM
+#   enable_risk_api      = true   # Risk API on same VM :8089
+#   enable_risk_udf      = true
+#   risk_udf_jar_path    = "../../udf/riverpay-risk/dist/riverpay-risk-udf-1.0.0.jar"
+#   # Do NOT set shared_*
+#
+# Instructor-led:
+# shared_resource_group_name = ""
+# shared_postgres_public_ip = ""
+# shared_postgres_ssh_private_key_path = "/abs/path/to/azure-shared/sshkey-<suffix>.pem"
+# shared_risk_api_endpoint = "https://riverpay-risk-api.<random>.azurecontainerapps.io"
+# shared_risk_api_key      = "riverpay-workshop-risk"
+# enable_risk_udf          = true
+# risk_udf_jar_path        = "../../udf/riverpay-risk/dist/riverpay-risk-udf-1.0.0.jar"
+# enable_lifecycle_shadowtraffic = true
+# table_include_list       = "riverpay.customer_profiles,riverpay.fx_rates"

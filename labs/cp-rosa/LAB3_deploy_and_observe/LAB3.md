@@ -66,6 +66,8 @@ Talking points: [`context/cp_rosa_demo_talk_track.md`](../../../context/cp_rosa_
 
 Use after the port-forward path works. TLS is required for CFK routes.
 
+macOS / Linux / Git Bash:
+
 ```sh
 export APPS_DOMAIN="apps.$(oc get dns cluster -o jsonpath='{.spec.baseDomain}')"
 echo "$APPS_DOMAIN"
@@ -74,6 +76,19 @@ sed "s/APPS_DOMAIN/${APPS_DOMAIN}/g" \
 
 oc -n confluent get routes
 oc -n confluent get controlcenter controlcenter \
+  -ojsonpath='{.status.restConfig.externalEndpoint}{"\n"}'
+```
+
+Windows (PowerShell — no `sed`, so use `-replace` on the file contents instead):
+
+```powershell
+$env:APPS_DOMAIN = "apps.$(oc get dns cluster -o jsonpath='{.spec.baseDomain}')"
+echo $env:APPS_DOMAIN
+(Get-Content ../../../terraform/cp-rosa/manifests/controlcenter-route-patch.yaml) `
+  -replace 'APPS_DOMAIN', $env:APPS_DOMAIN | oc apply -f -
+
+oc -n confluent get routes
+oc -n confluent get controlcenter controlcenter `
   -ojsonpath='{.status.restConfig.externalEndpoint}{"\n"}'
 ```
 

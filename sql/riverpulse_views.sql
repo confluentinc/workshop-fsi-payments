@@ -10,18 +10,19 @@ FROM riverflow_payments_risk_score
 WHERE risk_score >= 0.5
 ORDER BY risk_score DESC;
 
-CREATE OR REPLACE VIEW riverpulse_customer_risk_7d AS
+CREATE OR REPLACE VIEW riverpulse_customer_risk_24h AS
 SELECT customer_id, segment, account_tier,
        COUNT(*) AS payment_count,
        AVG(risk_score) AS avg_risk_score,
        MAX(risk_score) AS max_risk_score
 FROM riverflow_payments_risk_score
-WHERE enrichment_timestamp >= current_timestamp() - INTERVAL 7 DAYS
+WHERE enrichment_timestamp >= current_timestamp() - INTERVAL 24 HOURS
 GROUP BY customer_id, segment, account_tier
 ORDER BY avg_risk_score DESC;
 
 -- Phase 1 completion proxy (stall drill-down is Phase 2 backlog):
--- risk_score ≈ initiated+enriched; riverflow_payments ≈ fully completed (4-way inner join).
+-- risk_score ≈ initiated+enriched; riverflow_payments ≈ fully completed
+-- (4-way inner join + FX temporal join).
 CREATE OR REPLACE VIEW riverpulse_lifecycle_completion AS
 SELECT
   (SELECT COUNT(DISTINCT payment_id) FROM riverflow_payments_risk_score) AS initiated_enriched,

@@ -24,18 +24,21 @@ output "workshop_summary" {
 
     Kafka sources (not Tableflow'd):
       - ${local.customer_profiles_topic} (CDC)
+      - ${local.fx_rates_topic} (CDC upserts ~5s)
       - ${local.initiation_topic}
       - ${local.authorization_topic}
       - ${local.balance_update_topic}
       - ${local.status_topic}
 
     Flink data products → Tableflow:
-      - ${local.payments_topic} (append — completed payments, 4-way inner join)
-      - ${local.risk_score_topic} (upsert — initiation × profile temporal join)
+      - ${local.payments_topic} (append — completed payments, 4-way join + FX TTJ)
+      - ${local.risk_score_topic} (upsert — profile TTJ + ${var.enable_risk_udf ? "external risk UDF" : "CASE heuristics (set enable_risk_udf=true after building JAR)"})
+
+    Risk API: ${var.enable_risk_api ? "http://${module.postgres.public_dns}:8089" : "(disabled)"}
 
     Databricks catalog: ${databricks_catalog.main.name}
     Databricks schema:  ${module.databricks.databricks_schema_name}
-    Views: riverpulse_high_risk_payments, riverpulse_customer_risk_7d, riverpulse_lifecycle_completion
+    Views: riverpulse_high_risk_payments, riverpulse_customer_risk_24h, riverpulse_lifecycle_completion
 
     Next: open Genie and ask the three RiverPulse business questions (LAB3).
   EOT
@@ -43,6 +46,11 @@ output "workshop_summary" {
 
 output "postgres_public_dns" {
   value = module.postgres.public_dns
+}
+
+output "risk_api_url" {
+  description = "Shared Risk Scoring API base URL for Flink CONNECTION (aws-demo host)"
+  value       = var.enable_risk_api ? "http://${module.postgres.public_dns}:8089" : null
 }
 
 # Container-internal path when using docker-compose. For host SSH (LAB4), use

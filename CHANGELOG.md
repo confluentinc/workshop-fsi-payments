@@ -1,5 +1,33 @@
 # Change Log
 
+## [v0.2.0] — 2026-07-28
+
+Detailed author notes: [`context/elevate_2026_internal_changelog.md`](context/elevate_2026_internal_changelog.md).
+
+### Added
+
+- Azure instructor-led path: `terraform/azure-shared` + `terraform/azure`, `labs/instructor-led/`
+- AWS instructor-led path: `terraform/aws-shared` + `wsa-spec-aws.yaml` (parity with Azure)
+- Multi-cluster lifecycle ShadowTraffic: `terraform/modules/lifecycle-shadowtraffic`, `*-lifecycle-st` roots, `scripts/wsa-deploy-lifecycle-st.sh`
+- Shared Risk Scoring API (`services/risk-api/`) + Flink Java UDF (`udf/riverpay-risk/`)
+- Azure Container Apps HTTPS deployment for the shared Risk API
+- FX rates CDC + Flink temporal join (`flink/fx_conversion.sql`, `amount_usd`)
+- ShadowTraffic generator splits: postgres-only (shared) + kafka lifecycle (multi-connection aggregator)
+- Tableflow data TTL / right-to-forget (demo TF + instructor-led LAB4)
+- Internal Elevate changelog under `context/`
+- WSA specs (`wsa-spec-azure.yaml`, `wsa-spec-aws.yaml`) + operator guide (`docs/operator-instructor-led.md`)
+- Self-service path: `labs/self-service/`, `terraform/aws/` (MTs/Tableflow off), Azure BYO via empty `shared_*` (datagen VM: full ShadowTraffic + Risk API `:8089`; Elevate keeps shared Container Apps HTTPS)
+
+### Changed
+
+- Phase 1 scope: FX TTJ, external risk UDF, Tableflow TTL, instructor-led Azure + AWS (see `AGENTS.md`)
+- ShadowTraffic image pinned to `2.0.3`; initiation `throttleMs` raised to 2500 for demo pacing
+- Instructor-led lifecycle traffic: one `shadowtraffic-lifecycle` container × N Kafka connections (not N `st-life-*`)
+- `enable_risk_udf` defaults to `true`; JAR path defaults to `udf/riverpay-risk/dist/`
+- Completed-payments Flink product includes FX enrichment
+- Risk scoring prefers external UDF over inline CASE (CASE remains fallback when UDF off)
+- RiverPulse Q2 window: 7 days → **24 hours** (`riverpulse_customer_risk_24h`); Q3 proxy notes FX enrichment on completed payments
+
 ## v0.1.2 - 2026-07-16
 
 ### Changed

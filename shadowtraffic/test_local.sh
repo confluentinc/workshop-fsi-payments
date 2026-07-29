@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 WORKDIR="${TMPDIR:-/tmp}/riverpay-st-test-$$"
 LICENSE_URL="https://raw.githubusercontent.com/ShadowTraffic/shadowtraffic-examples/refs/heads/master/free-trial-license-docker.env"
-IMAGE="${SHADOWTRAFFIC_IMAGE:-shadowtraffic/shadowtraffic:latest}"
+IMAGE="${SHADOWTRAFFIC_IMAGE:-shadowtraffic/shadowtraffic:2.0.3}"
 SEED_COUNT=8
 INIT_COUNT=8
 SAMPLE_CAP=80

@@ -1,0 +1,127 @@
+# WSA Spec — AWS (RiverPay instructor-led)
+# Usage: op run --env-file=.env.tpl -- wsa build -w workshop-fsi-payments/wsa-spec-aws.yaml
+# Operator guide: docs/operator-instructor-led.md
+# Patterned on wsa-spec-azure.yaml + terraform/aws-shared
+
+name: riverpay-fsi-payments-aws
+description: Confluent Cloud + Flink + Tableflow + Databricks — RiverPay instructor-led (AWS)
+cloud: AWS
+
+# Dry-run friendly default; raise for the real event (e.g. 40–95).
+account_count: 2
+
+email_pattern: "tmm+wp{N}@confluent.io"
+
+# terraform_repo: https://github.com/confluentinc/workshop-fsi-payments
+terraform_path: terraform/aws/
+# terraform_ref: main
+shared_infra_path: terraform/aws-shared/
+
+# Local-copy mode only stages terraform/ by default. Shared + per-attendee
+# resolve ../../services, ../../shadowtraffic, and the UDF JAR — stage them.
+stage_paths:
+  - services/risk-api/
+  - shadowtraffic/
+  - udf/riverpay-risk/dist/
+
+# ShadowTraffic: aws-shared deploys profiles+FX → shared Postgres; after accounts,
+# scripts/wsa-deploy-lifecycle-st.sh --cloud aws applies aws-lifecycle-st.
+
+monitoring:
+  enabled: true
+
+cleanup:
+  disable_tableflow: true
+
+isolation:
+  databricks:
+    model: shared-workspace
+    workspace_name: "workshop-riverpay"
+    workspace_create: false
+    folder: per-user
+
+terraform_vars:
+  confluent_cloud_email: "{email}"
+  databricks_user_email: "{email}"
+  databricks_sso_email: "{email}"
+  environment: "workshop"
+  prefix: "wp{NNN}"
+  table_include_list: "riverpay.customer_profiles,riverpay.fx_rates"
+  enable_flink_mts: false
+  enable_tableflow_topics: false
+  enable_risk_udf: true
+  enable_lifecycle_shadowtraffic: false
+  enable_shadowtraffic: false
+  enable_risk_api: false
+  risk_udf_jar_path: "../../udf/riverpay-risk/dist/riverpay-risk-udf-1.0.0.jar"
+  # Shared Postgres / S3 / Risk API / SSH are injected from aws-shared
+  # outputs as TF_VAR_shared_* (see docs/operator-instructor-led.md).
+
+providers:
+  - name: confluent
+    version: ">= 2.0"
+  - name: databricks
+    version: ">= 1.0"
+  - name: aws
+    version: ">= 5.0"
+
+tools_required:
+  - name: terraform
+    version: ">= 1.7"
+  - name: git
+    version: ">= 2.0"
+  - name: op
+    version: ">= 2.0"
+  - name: aws
+    version: ">= 2.0"
+
+env_vars:
+  - TF_VAR_confluent_cloud_api_key
+  - TF_VAR_confluent_cloud_api_secret
+  - TF_VAR_databricks_aws_host
+  - TF_VAR_databricks_aws_account_id
+  - TF_VAR_databricks_aws_service_principal_client_id
+  - TF_VAR_databricks_aws_service_principal_client_secret
+  - TF_VAR_owner_email
+  - TF_VAR_aws_access_key_id
+  - TF_VAR_aws_secret_access_key
+  - TF_VAR_aws_cloud_region
+  - AWS_ACCESS_KEY_ID
+  - AWS_SECRET_ACCESS_KEY
+
+credentials:
+  - name: Confluent Cloud
+    fields:
+      - label: URL
+        source: terraform
+        output: cc_environment_url
+      - label: Username
+        source: spec
+        value: "{email}"
+      - label: Password
+        source: op
+  - name: Databricks
+    fields:
+      - label: Workspace URL
+        source: terraform
+        output: dbx_workspace_url
+      - label: Username
+        source: spec
+        value: "{email}"
+      - label: Password
+        source: op
+      - label: SP Client ID
+        source: terraform
+        output: dbx_sp_client_id
+      - label: SP Client Secret
+        source: terraform
+        output: dbx_sp_client_secret
+      - label: Unity Catalog Name
+        source: terraform
+        output: dbx_catalog_name
+      - label: Schema Name
+        source: terraform
+        output: dbx_schema_name
+      - label: SQL Warehouse ID
+        source: terraform
+        output: dbx_sql_warehouse_id

@@ -6,14 +6,29 @@
 
 Each section lists: a time budget, what you (facilitator) do and say, what participants do, and the expected result on screen. Spoken lines are guidance, not a word-for-word teleprompter — adapt to your audience.
 
-Hands-on path for attendees: `labs/demo/` (LAB0–LAB4). Design details: `context/` + `AGENTS.md`.
+Hands-on path for attendees: `labs/demo/` (LAB0–LAB4) for demo mode, or
+`labs/instructor-led/` (LAB1–LAB6) for Elevate. Design details: `context/` +
+`AGENTS.md`. Elevate implementation notes:
+`context/elevate_2026_internal_changelog.md`.
 
 ## Pre-flight (before attendees arrive)
 
+### Demo mode (AWS)
+
 * Prefer a completed `terraform apply` in `terraform/aws-demo` (LAB2) so live demo focuses on observe + Genie.
-* Confirm CDC topic `riverflow.riverpay.customer_profiles` and four lifecycle topics have traffic.
-* Confirm Flink MTs `riverflow_payments` (completed) and `riverflow_payments_risk_score` have rows.
+* Confirm CDC topics `riverflow.riverpay.customer_profiles` and `riverflow.riverpay.fx_rates`, plus four lifecycle topics, have traffic.
+* Confirm Flink MTs `riverflow_payments` (completed, with `amount_usd`) and `riverflow_payments_risk_score` have rows.
+* Confirm Risk API healthy and UDF path active (`enable_risk_udf=true` default).
 * Databricks catalog + RiverPulse views ready; Genie prompts from `sql/genie_prompts.md` bookmarked.
+
+### Elevate instructor-led (Azure)
+
+* `azure-shared` applied: shared Postgres ST running, Risk API HTTPS smoke OK (`services/risk-api/smoke.sh`).
+* Per-attendee `azure` applied: CDC + lifecycle ST + risk CONNECTION/UDF pre-registered; Flink MTs / Tableflow **not** auto-created.
+* Credential distribution ready for LAB1 claim.
+
+### Shared
+
 * Have `labs/shared/troubleshooting.md` open as fallback.
 * Remember: Phase 1 completion rate is a proxy; stall drill-down is backlog.
 
@@ -27,8 +42,8 @@ Hands-on path for attendees: `labs/demo/` (LAB0–LAB4). Design details: `contex
 
 **You frame the three questions the demo will answer:**
 * Which payments are most likely to need manual intervention right now?
-* Which customers drive the highest operational exception exposure in the last 7 days?
-* What is the RiverFlow lifecycle completion rate from initiation to completed status? (Phase 1 proxy — stall drill-down is backlog)
+* Which customers drive the highest operational exception exposure in the last 24 hours?
+* What is the RiverFlow lifecycle completion rate from initiation to completed status? (Phase 1 proxy: completed = 4-way join + FX enrichment — stall drill-down is backlog)
 
 **Participants do:** Listen; optionally share their current payments pain points.
 
@@ -40,7 +55,7 @@ Hands-on path for attendees: `labs/demo/` (LAB0–LAB4). Design details: `contex
 
 **You do:** Walk the four-layer story: source → stream → process → serve.
 
-**You say:** "Customer profiles live in Postgres and flow in via CDC. Payment events stream into Kafka across initiation, authorization, balance update, and status. Flink builds two data products: completed payments via a four-way inner join, and an operational `risk_score` via a temporal join to the customer profile — exception probability, not fraud. Tableflow publishes those two products to Unity Catalog so Genie can answer questions live."
+**You say:** "Customer profiles and FX rates live in Postgres and flow in via CDC. Payment events stream into Kafka across initiation, authorization, balance update, and status. Flink builds two data products: completed payments via a four-way inner join plus an FX temporal join for USD-normalized amounts, and an operational `risk_score` via a profile temporal join plus an external risk UDF — exception probability, not fraud. Tableflow publishes those two products to Unity Catalog (with a right-to-forget / TTL talking point) so Genie can answer questions live."
 
 **You say (portability note):** "This is Cloud-first. The same design is intended to run on Confluent Platform and Private Cloud too — worth noting for anyone planning Cloud now, CP/CPC later." *(Internal note: CP/CPC hasn't been built or validated yet — don't imply it's been demonstrated if a customer presses for specifics.)*
 
@@ -54,13 +69,13 @@ Hands-on path for attendees: `labs/demo/` (LAB0–LAB4). Design details: `contex
 
 **You do:** Tour Confluent Cloud (CDC + lifecycle topics + Flink risk table + Tableflow), then Databricks Genie.
 
-**Beat A — CDC + ShadowTraffic (5 min):** Show profiles landing; mention ShadowTraffic as the generator collaborators know.
+**Beat A — CDC + ShadowTraffic (5 min):** Show profiles **and FX rates** landing; mention ShadowTraffic as the generator. On Elevate, call out shared Postgres → per-attendee CDC fan-out.
 
-**Beat B — Flink data products (8 min):** Show `riverflow_payments` (completed only) and `riverflow_payments_risk_score`; call out a high `risk_score` with readable `risk_reason`. Note stall drill-down is Phase 2.
+**Beat B — Flink data products (8 min):** Show `riverflow_payments` (completed + `amount_usd`) and `riverflow_payments_risk_score`; call out a high `risk_score` with readable `risk_reason` from the **external UDF**. Note stall drill-down is Phase 2.
 
-**Beat C — CSFLE talking point (2 min):** Point at light PII fields; "in production we'd protect these with CSFLE — not walking through it today."
+**Beat C — Tableflow TTL + CSFLE (3 min):** Point at Tableflow data TTL / right-to-forget; light PII + "in production we'd protect these with CSFLE — not walking through it today."
 
-**Beat D — RiverPulse / Genie (10 min):** Ask the three prompts; optionally show SQL views as backup.
+**Beat D — RiverPulse / Genie (9 min):** Ask the three prompts; optionally show SQL views as backup. Elevate: judge answer *shape*, not golden rows.
 
 **Participants do:** Follow along in their own demo env if running labs, or watch facilitator screen.
 
@@ -72,7 +87,7 @@ Hands-on path for attendees: `labs/demo/` (LAB0–LAB4). Design details: `contex
 
 **You do:** Close on outcomes and what's deliberately out of scope.
 
-**You say:** "You saw ingest, stream, enrich, and serve — ending in Genie answers ops can act on. Phase 2 can add NSF/fraud branches, richer ISO-style payloads, pattern detection, and deeper security labs. Today stayed intentionally happy-path so the story is reliable."
+**You say:** "You saw ingest, stream, enrich, and serve — ending in Genie answers ops can act on. Phase 2 can add NSF/fraud branches, richer ISO-style payloads, pattern detection (`MATCH_RECOGNIZE`), and deeper security labs. Today stayed intentionally happy-path — with FX conversion and an external risk lookup — so the story is reliable."
 
 **Expected result:** Audience leaves with a clear Phase 1 vs Phase 2 mental model.
 
@@ -81,6 +96,7 @@ Hands-on path for attendees: `labs/demo/` (LAB0–LAB4). Design details: `contex
 ## Recovery cues
 
 * No CDC data → check connector + Postgres; see troubleshooting doc
-* Empty risk table → confirm ShadowTraffic + watermarks; wait 1–2 minutes
+* Empty risk table → confirm ShadowTraffic + Risk API + UDF CONNECTION; wait 1–2 minutes
+* Empty `amount_usd` / FX join misses → confirm `riverflow.riverpay.fx_rates` CDC + watermarks
 * Genie empty → wait for Tableflow sync; fall back to SQL views
-* Destroy/apply issues → LAB4 + shared troubleshooting
+* Destroy/apply issues → LAB4 (demo) or operator azure teardown + shared troubleshooting

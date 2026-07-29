@@ -18,3 +18,15 @@ variable "risk_score_topic" {
   type    = string
   default = "riverflow_payments_risk_score"
 }
+
+variable "data_retention_ms" {
+  description = "Tableflow data TTL (row expiration). Minimum allowed by Confluent is 2592000000 (30 days)."
+  type        = string
+  default     = "2592000000"
+}
+
+variable "snapshot_retention_ms" {
+  description = "Max age of Delta table versions/snapshots to retain (milliseconds)."
+  type        = string
+  default     = "604800000" # 7 days
+}

@@ -1,15 +1,21 @@
 -- Reference Flink SQL for RiverPay data products (also embedded in Terraform).
 
 -- =============================================================================
--- 1) Completed payments — 4-way inner join → riverflow_payments (append)
--- Only emits when initiation, authorization, balance_update, and status all match.
+-- 1) Completed payments — 4-way inner join + FX temporal join → riverflow_payments
+-- Only emits when initiation, authorization, balance_update, and status all match,
+-- and an FX rate exists for the payment currency at initiation time.
 -- Progressive / stall-aware state is Phase 2 backlog.
+-- See also: flink/fx_conversion.sql
 -- =============================================================================
 
--- ALTER TABLE `riverflow.payments.initiation` SET ('changelog.mode' = 'append');
--- ALTER TABLE `riverflow.payments.initiation`
---   MODIFY WATERMARK FOR `initiated_at` AS `initiated_at` - INTERVAL '5' SECOND;
--- (same append + watermark pattern for authorization, balance_update, status)
+-- Watermarks / changelog (demo Terraform applies equivalents):
+-- Lifecycle Kafka sources: append + event-time watermark on the stage timestamp
+--   (initiated_at / authorized_at / updated_at / completed_at), OR use $rowtime
+--   if you prefer broker ingestion time — keep the choice consistent across joins.
+-- FX rates CDC: upsert + $rowtime watermark (see fx_conversion.sql).
+-- Profiles CDC: upsert + $rowtime for the risk temporal join (see risk_udf.sql).
+-- Prefer $rowtime for CDC upsert sources; lifecycle append topics commonly use
+-- the business timestamp column with a small skew interval.
 
 -- CREATE MATERIALIZED TABLE riverflow_payments AS
 SELECT
@@ -19,6 +25,8 @@ SELECT
   i.`destination_account`,
   i.`amount`,
   i.`currency`,
+  fx.`rate_to_usd`,
+  ROUND(i.`amount` * fx.`rate_to_usd`, 2) AS `amount_usd`,
   i.`payment_type`,
   i.`channel`,
   i.`initiated_at`,
@@ -36,17 +44,21 @@ FROM `riverflow.payments.initiation` i
   INNER JOIN `riverflow.payments.balance_update` b
     ON i.`payment_id` = b.`payment_id`
   INNER JOIN `riverflow.payments.status` s
-    ON i.`payment_id` = s.`payment_id`;
+    ON i.`payment_id` = s.`payment_id`
+  JOIN `riverflow.riverpay.fx_rates` FOR SYSTEM_TIME AS OF i.`$rowtime` AS fx
+    ON fx.`currency_code` = i.`currency`;
 
 -- =============================================================================
 -- 2) Operational risk — temporal join → riverflow_payments_risk_score (upsert)
--- Inputs: initiation + customer_profiles only. risk_score ≠ fraud.
+-- Inputs: initiation + customer_profiles. CASE heuristics are interim;
+-- Elevate replaces scoring with an external risk UDF (shared workshop API).
+-- risk_score ≠ fraud.
 -- =============================================================================
 
 -- ALTER TABLE `riverflow.riverpay.customer_profiles`
 --   SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');
 -- ALTER TABLE `riverflow.riverpay.customer_profiles`
---   MODIFY WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '5' SECOND;
+--   MODIFY WATERMARK FOR `$rowtime` AS `$rowtime` - INTERVAL '5' SECOND;
 
 -- CREATE MATERIALIZED TABLE riverflow_payments_risk_score AS
 SELECT
@@ -76,5 +88,5 @@ SELECT
   END AS `risk_reason`,
   CURRENT_TIMESTAMP AS `enrichment_timestamp`
 FROM `riverflow.payments.initiation` p
-  JOIN `riverflow.riverpay.customer_profiles` FOR SYSTEM_TIME AS OF p.`initiated_at` AS c
+  JOIN `riverflow.riverpay.customer_profiles` FOR SYSTEM_TIME AS OF p.`$rowtime` AS c
     ON c.`customer_id` = p.`customer_id`;

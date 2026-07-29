@@ -1,8 +1,10 @@
 # ===============================
 # Tableflow Topics — RiverPay Flink Data Products
 # ===============================
-# Append: riverflow_payments (completed payments from 4-way inner join)
-# Upsert: riverflow_payments_risk_score (temporal join enrichment)
+# Append: riverflow_payments (completed payments from 4-way inner join + FX TTJ)
+# Upsert: riverflow_payments_risk_score (profile TTJ + risk UDF)
+# data_retention_ms = Tableflow data TTL (row expiration / right-to-forget)
+# retention_ms      = Delta snapshot/version retention
 # Raw lifecycle topics are Kafka sources only — not Tableflow-enabled in Phase 1.
 
 terraform {
@@ -30,8 +32,10 @@ resource "confluent_tableflow_topic" "payments" {
     id = var.kafka_cluster_id
   }
 
-  display_name  = var.payments_topic
-  table_formats = ["DELTA"]
+  display_name       = var.payments_topic
+  table_formats      = ["DELTA"]
+  data_retention_ms  = var.data_retention_ms
+  retention_ms       = var.snapshot_retention_ms
 
   byob_aws {
     bucket_name             = var.s3_bucket_name
@@ -58,8 +62,10 @@ resource "confluent_tableflow_topic" "risk_score" {
     id = var.kafka_cluster_id
   }
 
-  display_name  = var.risk_score_topic
-  table_formats = ["DELTA"]
+  display_name       = var.risk_score_topic
+  table_formats      = ["DELTA"]
+  data_retention_ms  = var.data_retention_ms
+  retention_ms       = var.snapshot_retention_ms
 
   byob_aws {
     bucket_name             = var.s3_bucket_name

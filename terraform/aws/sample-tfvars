@@ -1,0 +1,30 @@
+# ===============================
+# Self-service — Terraform Variables (AWS)
+# ===============================
+# Copy to terraform.tfvars. See labs/self-service/LAB1_account_setup/LAB1.md
+
+# --- Your identity ---
+confluent_cloud_email = ""
+prefix                = "neo"   # short lowercase prefix for resource names
+cloud_region          = "us-east-1"
+
+# --- Confluent Cloud ---
+confluent_cloud_api_key    = ""
+confluent_cloud_api_secret = ""
+
+# --- Databricks (Free Edition OK) ---
+databricks_host                            = ""  # https://dbc-….cloud.databricks.com
+databricks_account_id                      = ""
+databricks_user_email                      = ""
+databricks_service_principal_client_id     = ""
+databricks_service_principal_client_secret = ""
+# databricks_sql_warehouse_name = "Serverless Starter Warehouse"
+
+# --- Self-service flags (leave false so labs stay hands-on) ---
+enable_flink_mts          = false
+enable_tableflow_topics   = false
+enable_shadowtraffic      = true
+enable_risk_api           = true
+enable_risk_udf           = true
+risk_api_key              = "riverpay-workshop-risk"
+risk_udf_jar_path         = "../../udf/riverpay-risk/dist/riverpay-risk-udf-1.0.0.jar"

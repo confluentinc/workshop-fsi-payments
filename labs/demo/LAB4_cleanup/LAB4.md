@@ -14,6 +14,8 @@ Completed LAB 2 (resources exist).
 
 If you want to halt generation before destroy, run SSH from the **host** (not inside the Terraform container). The key file is written under `terraform/aws-demo/` and mounted into the container — use the host path:
 
+macOS / Linux / Git Bash:
+
 ```sh
 cd terraform/aws-demo
 HOST=$(docker-compose run --rm terraform -c "terraform output -raw postgres_public_dns")
@@ -22,6 +24,19 @@ HOST=$(docker-compose run --rm terraform -c "terraform output -raw postgres_publ
 SSH_KEY=$(ls -1 sshkey-*.pem | head -n 1)
 chmod 400 "$SSH_KEY"
 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no ec2-user@"$HOST" \
+  "sudo docker rm -f shadowtraffic-riverpay"
+```
+
+Windows (PowerShell — the Windows OpenSSH client checks private-key file permissions, so `chmod` is replaced with `icacls` to strip inherited permissions and grant only the current user read access):
+
+```powershell
+cd terraform/aws-demo
+$HOST = docker-compose run --rm terraform -c "terraform output -raw postgres_public_dns"
+# Prefer the local key file (host path). Do not use terraform output ssh_key_path —
+# that path is container-internal (/workspace/...) and will fail with host ssh.
+$SSH_KEY = Get-ChildItem sshkey-*.pem | Select-Object -First 1 -ExpandProperty Name
+icacls $SSH_KEY /inheritance:r /grant:r "$($env:USERNAME):(R)" | Out-Null
+ssh -i $SSH_KEY -o StrictHostKeyChecking=no ec2-user@$HOST `
   "sudo docker rm -f shadowtraffic-riverpay"
 ```
 
@@ -47,6 +62,8 @@ docker-compose run --rm terraform -c "terraform destroy -auto-approve"
 
 From `terraform/aws-demo`, remove local artifacts that are gitignored but may still hold secrets or confuse a re-apply:
 
+macOS / Linux / Git Bash:
+
 ```sh
 cd terraform/aws-demo
 # SSH keys written by Terraform
@@ -58,6 +75,21 @@ rm -rf generated/connections/*
 # Terraform state (only if you are done and do not need to re-destroy)
 # rm -f terraform.tfstate terraform.tfstate.backup .terraform.lock.hcl
 # rm -rf .terraform
+```
+
+Windows (PowerShell):
+
+```powershell
+cd terraform/aws-demo
+# SSH keys written by Terraform
+Remove-Item -Force sshkey-*.pem
+# Local AWS config if you ran `aws configure` inside the container
+Remove-Item -Force aws-config/credentials, aws-config/config
+# Generated ShadowTraffic connection files (if present)
+Remove-Item -Recurse -Force generated/connections/*
+# Terraform state (only if you are done and do not need to re-destroy)
+# Remove-Item -Force terraform.tfstate, terraform.tfstate.backup, .terraform.lock.hcl
+# Remove-Item -Recurse -Force .terraform
 ```
 
 > [!WARNING]

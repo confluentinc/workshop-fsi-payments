@@ -62,9 +62,19 @@ terraform output -raw cluster_admin_password
 
 ### Step 3: Log in with `oc`
 
+macOS / Linux / Git Bash:
+
 ```sh
 oc login "$(terraform output -raw cluster_api_url)" \
   -u "$(terraform output -raw cluster_admin_username)" \
+  -p "$(terraform output -raw cluster_admin_password)"
+```
+
+Windows (PowerShell — `$(...)` command substitution works the same as bash, only the line-continuation character differs):
+
+```powershell
+oc login "$(terraform output -raw cluster_api_url)" `
+  -u "$(terraform output -raw cluster_admin_username)" `
   -p "$(terraform output -raw cluster_admin_password)"
 ```
 

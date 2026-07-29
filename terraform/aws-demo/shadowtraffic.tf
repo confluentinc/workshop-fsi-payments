@@ -2,7 +2,7 @@
 # ShadowTraffic Data Generator
 # ===============================
 # Deploys ShadowTraffic on the PostgreSQL EC2 instance.
-# Seeds riverpay.customer_profiles and emits RiverFlow lifecycle events to Kafka.
+# Seeds riverpay.customer_profiles + fx_rates and emits RiverFlow lifecycle events to Kafka.
 # License: free-trial env file fetched via HTTP (same pattern as early
 # workshop-tableflow-databricks ShadowTraffic Terraform).
 
@@ -132,8 +132,26 @@ resource "null_resource" "shadowtraffic_deploy" {
         echo "Wrote /opt/shadowtraffic/config.json"
         sudo docker rm -f shadowtraffic-riverpay 2>/dev/null || true
 
-        # Align existing DB columns with ShadowTraffic `_gen: now` (epoch millis BIGINT).
-        # Fresh instances get BIGINT from cloud-init; this covers already-provisioned hosts.
+        # Ensure FX rates table exists (fresh hosts get it from cloud-init; this covers already-provisioned hosts).
+        echo "Ensuring riverpay.fx_rates exists and is seeded..."
+        sudo docker exec -i postgres-workshop psql -U postgres -d workshop -v ON_ERROR_STOP=1 <<'SQL'
+CREATE TABLE IF NOT EXISTS riverpay.fx_rates (
+    currency_code VARCHAR(3) PRIMARY KEY,
+    rate_to_usd DOUBLE PRECISION NOT NULL,
+    updated_at BIGINT NOT NULL
+);
+INSERT INTO riverpay.fx_rates (currency_code, rate_to_usd, updated_at) VALUES
+    ('USD', 1.0000, (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT),
+    ('GBP', 1.2700, (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT),
+    ('AUD', 0.6550, (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT),
+    ('CAD', 0.7350, (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT),
+    ('JPY', 0.00670, (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT),
+    ('EUR', 1.0850, (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT)
+ON CONFLICT (currency_code) DO NOTHING;
+ALTER TABLE riverpay.fx_rates OWNER TO debezium;
+GRANT ALL PRIVILEGES ON TABLE riverpay.fx_rates TO debezium;
+SQL
+
         echo "Ensuring riverpay.customer_profiles timestamp columns are BIGINT..."
         sudo docker exec -i postgres-workshop psql -U postgres -d workshop -v ON_ERROR_STOP=1 <<'SQL'
 DO $align$

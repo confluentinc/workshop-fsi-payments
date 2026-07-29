@@ -18,6 +18,10 @@ variable "customer_profiles_topic" {
   type    = string
   default = "riverflow.riverpay.customer_profiles"
 }
+variable "fx_rates_topic" {
+  type    = string
+  default = "riverflow.riverpay.fx_rates"
+}
 variable "initiation_topic" {
   type    = string
   default = "riverflow.payments.initiation"
@@ -48,5 +52,48 @@ variable "risk_score_table_name" {
 variable "schema_generation" {
   description = "Bump to recreate Flink statements after wire-format changes (e.g. JSON → Avro)."
   type        = string
-  default     = "avro-v1"
+  default     = "avro-v2-fx"
+}
+
+variable "enable_risk_udf" {
+  description = "Use external risk UDF instead of inline CASE heuristics"
+  type        = bool
+  default     = false
+}
+
+variable "enable_materialized_tables" {
+  description = "Create Flink MTs for completed payments and risk_score (false = ALTER/UDF only; attendees create MTs in labs)"
+  type        = bool
+  default     = true
+}
+
+variable "risk_api_endpoint" {
+  description = "Base URL for shared Risk Scoring API (used in CREATE CONNECTION)"
+  type        = string
+  default     = ""
+}
+
+variable "risk_api_key" {
+  description = "API key for Risk Scoring REST CONNECTION"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "risk_udf_jar_path" {
+  description = "Local path to riverpay-risk-udf JAR when enable_risk_udf=true"
+  type        = string
+  default     = "../../udf/riverpay-risk/dist/riverpay-risk-udf-1.0.0.jar"
+}
+
+variable "cloud" {
+  description = "Cloud provider for Flink artifact (AWS / AZURE / GCP)"
+  type        = string
+  default     = "AWS"
+}
+
+variable "cloud_region" {
+  description = "Cloud region for Flink artifact"
+  type        = string
+  default     = "us-east-1"
 }

@@ -36,6 +36,15 @@ terraform/aws-demo/generated/**
 terraform/aws-demo/aws-config/*
 !terraform/aws-demo/aws-config/.gitkeep
 terraform/aws-demo/sshkey-*.pem
+terraform/aws/generated/**
+!terraform/aws/generated/connections/.gitkeep
+terraform/aws/sshkey-*.pem
+terraform/azure/generated/**
+!terraform/azure/generated/connections/.gitkeep
+terraform/azure/sshkey-*.pem
+terraform/azure-shared/generated/**
+!terraform/azure-shared/generated/connections/.gitkeep
+terraform/azure-shared/sshkey-*.pem
 
 # cp-rosa local kube leftovers (never commit)
 terraform/cp-rosa/**/kubeconfig*

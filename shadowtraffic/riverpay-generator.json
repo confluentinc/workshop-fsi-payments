@@ -165,6 +165,19 @@
           ],
           "decimals": 2
         },
+        "currency": {
+          "_gen": "oneOf",
+          "choices": [
+            "USD",
+            "USD",
+            "USD",
+            "GBP",
+            "AUD",
+            "CAD",
+            "JPY",
+            "EUR"
+          ]
+        },
         "channel": {
           "_gen": "oneOf",
           "choices": [
@@ -201,7 +214,10 @@
           "_gen": "var",
           "var": "amount"
         },
-        "currency": "USD",
+        "currency": {
+          "_gen": "var",
+          "var": "currency"
+        },
         "payment_type": "instant_credit_transfer",
         "channel": {
           "_gen": "var",
@@ -213,7 +229,7 @@
         "status": "initiated"
       },
       "localConfigs": {
-        "throttleMs": 1500,
+        "throttleMs": 2500,
         "avroSchemaHint": {
           "key": {
             "type": "record",
@@ -276,6 +292,111 @@
               }
             ]
           }
+        }
+      }
+    },
+    {
+      "name": "fx_rates",
+      "connection": "postgres",
+      "table": "riverpay.fx_rates",
+      "op": "update",
+      "localConfigs": {
+        "throttleMs": 5000
+      },
+      "vars": {
+        "fx": {
+          "_gen": "oneOf",
+          "choices": [
+            {
+              "code": "GBP",
+              "mean": 1.27,
+              "sd": 0.0035
+            },
+            {
+              "code": "AUD",
+              "mean": 0.655,
+              "sd": 0.0025
+            },
+            {
+              "code": "CAD",
+              "mean": 0.735,
+              "sd": 0.0025
+            },
+            {
+              "code": "JPY",
+              "mean": 0.0067,
+              "sd": 0.00004
+            },
+            {
+              "code": "EUR",
+              "mean": 1.085,
+              "sd": 0.0035
+            }
+          ]
+        },
+        "rate_to_usd": {
+          "_gen": "oneOf",
+          "choices": [
+            {
+              "_gen": "normalDistribution",
+              "mean": {
+                "_gen": "var",
+                "var": "fx",
+                "path": [
+                  "mean"
+                ]
+              },
+              "sd": {
+                "_gen": "var",
+                "var": "fx",
+                "path": [
+                  "sd"
+                ]
+              }
+            },
+            {
+              "_gen": "normalDistribution",
+              "mean": {
+                "_gen": "var",
+                "var": "fx",
+                "path": [
+                  "mean"
+                ]
+              },
+              "sd": {
+                "_gen": "var",
+                "var": "fx",
+                "path": [
+                  "sd"
+                ]
+              }
+            },
+            {
+              "_gen": "var",
+              "var": "fx",
+              "path": [
+                "mean"
+              ]
+            }
+          ]
+        }
+      },
+      "where": {
+        "currency_code": {
+          "_gen": "var",
+          "var": "fx",
+          "path": [
+            "code"
+          ]
+        }
+      },
+      "row": {
+        "rate_to_usd": {
+          "_gen": "var",
+          "var": "rate_to_usd"
+        },
+        "updated_at": {
+          "_gen": "now"
         }
       }
     },
@@ -443,7 +564,13 @@
             "amount"
           ]
         },
-        "currency": "USD",
+        "currency": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "currency"
+          ]
+        },
         "source_balance_after": {
           "_gen": "uniformDistribution",
           "bounds": [
@@ -637,6 +764,7 @@
       {
         "generators": [
           "customer_profiles",
+          "fx_rates",
           "payment_initiation",
           "payment_authorization",
           "payment_balance_update",

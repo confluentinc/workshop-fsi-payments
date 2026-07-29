@@ -2,14 +2,14 @@
 
 ## Overview
 
-A single `terraform apply` provisions the RiverPay pipeline: AWS + Postgres + ShadowTraffic, Confluent Cloud (CDC, lifecycle topics, Flink completed-payments join + risk temporal join, Tableflow), and Databricks Unity Catalog integration.
+A single `terraform apply` provisions the RiverPay pipeline: AWS + Postgres + ShadowTraffic, Confluent Cloud (CDC for profiles **and FX rates**, lifecycle topics, Flink completed-payments join **+ FX TTJ**, risk score via **profile TTJ + external UDF**, Tableflow **+ data TTL**), and Databricks Unity Catalog integration.
 
 ### What Terraform Creates
 
 | Layer | Resources |
 |-------|-----------|
-| **AWS** | VPC, EC2 (PostgreSQL + ShadowTraffic), S3, IAM |
-| **Confluent Cloud** | Environment, Standard Kafka cluster, Schema Registry, Flink compute pool, Postgres CDC, lifecycle topics, Flink MTs (`riverflow_payments`, `riverflow_payments_risk_score`), Tableflow on those two products + UC catalog integration |
+| **AWS** | VPC, EC2 (PostgreSQL + ShadowTraffic + Risk API `:8089`), S3, IAM |
+| **Confluent Cloud** | Environment, Standard Kafka cluster, Schema Registry, Flink compute pool, Postgres CDC (`customer_profiles` + `fx_rates`), lifecycle topics, Flink MTs (`riverflow_payments`, `riverflow_payments_risk_score`), risk UDF artifact/CONNECTION (default on), Tableflow on those two products (with data TTL) + UC catalog integration |
 | **Databricks** | Storage credential, external location, catalog, RiverPulse SQL views |
 
 ### Prerequisites
@@ -40,7 +40,7 @@ Use the idle apply time — don’t leave a silent gap:
 
 1. Walk the [architecture diagram](../../../README.md#architecture) (source → stream → Flink products → Tableflow → Genie)
 2. Introduce personas from [`USECASE.md`](../../../USECASE.md) (Dana / Marcus)
-3. Preview the CSFLE talking point below (light PII on profiles — not a full lab)
+3. Preview the CSFLE + **Tableflow TTL / right-to-forget** talking points (light PII on profiles — not full labs)
 4. Bookmark Genie prompts: [`sql/genie_prompts.md`](../../../sql/genie_prompts.md)
 
 ### Step 2: Review Outputs
@@ -78,22 +78,25 @@ demo_status = {
 ### Step 3: Observe Confluent Cloud
 
 1. Open the **Tableflow** and **Flink** links from `demo_status`
-2. Confirm CDC topic `riverflow.riverpay.customer_profiles` has messages (~100 profiles after ShadowTraffic stage 1)
+2. Confirm CDC topics have messages:
+   - `riverflow.riverpay.customer_profiles` (~100 profiles after ShadowTraffic stage 1)
+   - `riverflow.riverpay.fx_rates` (USD + GBP/AUD/CAD/JPY/EUR; updates ~every 5s)
 3. Confirm lifecycle **source** topics receive events:
    - `riverflow.payments.initiation`
    - `riverflow.payments.authorization`
    - `riverflow.payments.balance_update`
    - `riverflow.payments.status`
-4. Optional — open one message on `riverflow.payments.initiation` in the Confluent Cloud topic UI and confirm it deserializes via **Schema Registry (Avro)** (flattened payment fields, not nested ISO 20022)
+4. Optional — open one message on `riverflow.payments.initiation` in the Confluent Cloud topic UI and confirm it deserializes via **Schema Registry (Avro)** (flattened payment fields, multi-currency, not nested ISO 20022)
 5. Open Flink data products:
-   - `riverflow_payments` — completed payments (4-way inner join)
-   - `riverflow_payments_risk_score` — `risk_score` / `risk_reason`
-6. Confirm Tableflow is enabled on those **two** products (not the raw lifecycle topics)
+   - `riverflow_payments` — completed payments (4-way inner join + FX TTJ → `amount_usd`)
+   - `riverflow_payments_risk_score` — `risk_score` / `risk_reason` from external UDF
+6. Confirm Tableflow is enabled on those **two** products (not the raw lifecycle topics) and note **data TTL** / retention for the right-to-forget talking point
+7. Optional — `terraform output risk_api_url` and curl `/health` on the demo Risk API
 
 > [!TIP]
-> **CSFLE talking point (keep brief)**
+> **CSFLE + TTL talking points (keep brief)**
 >
-> Profile rows include light PII fields (`full_name`, `tax_id`, `date_of_birth`). In production, RiverPay would protect these with CSFLE. This workshop does not walk through CSFLE setup — call it out and move on.
+> Profile rows include light PII fields (`full_name`, `tax_id`, `date_of_birth`). In production, RiverPay would protect these with CSFLE. Tableflow **data TTL** supports retention / right-to-forget. This workshop does not walk through full CSFLE setup — call both out and move on.
 
 ### Step 4: Observe Databricks
 
@@ -102,14 +105,14 @@ demo_status = {
 3. Confirm Delta tables from Tableflow and views (sync can take several extra minutes after apply):
    - `riverflow_payments` / `riverflow_payments_risk_score`
    - `riverpulse_high_risk_payments`
-   - `riverpulse_customer_risk_7d`
+   - `riverpulse_customer_risk_24h`
    - `riverpulse_lifecycle_completion`
 
 #### Checkpoint
 
 - [ ] `terraform apply` succeeded
-- [ ] CDC profile topic and lifecycle topics show traffic
-- [ ] `riverflow_payments` and risk score tables have rows
+- [ ] CDC profile + FX topics and lifecycle topics show traffic
+- [ ] `riverflow_payments` (with `amount_usd`) and risk score tables have rows
 - [ ] Databricks catalog/schema/views visible (Tableflow→UC can take 30–60+ minutes on first publish; apply waits for this)
 
 ## Conclusion
@@ -125,7 +128,8 @@ Continue to **[LAB 3: RiverPulse Analytics](../LAB3_riverpulse_analytics/LAB3.md
 | Symptom | Fix |
 |---------|-----|
 | Apply stuck on Postgres wait | Check EC2 security group / SSH key; see shared troubleshooting |
-| Empty risk_score | Confirm ShadowTraffic container on EC2; wait for watermarks |
+| Empty risk_score | Confirm ShadowTraffic + Risk API on EC2; UDF CONNECTION; wait for watermarks |
+| Missing `amount_usd` / FX join gaps | Confirm `riverflow.riverpay.fx_rates` CDC traffic |
 | Tables missing in UC | Wait for Tableflow sync; re-check catalog integration |
 
 Full guide: [shared troubleshooting](../../shared/troubleshooting.md).
