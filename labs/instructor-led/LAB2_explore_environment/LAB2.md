@@ -34,8 +34,10 @@ In your environment → cluster → **Topics**, confirm messages on:
 
 ### Step 2: Connectors
 
-Open **Connectors** and confirm the Postgres CDC source is **Running** with table include list covering `riverpay.customer_profiles` and `riverpay.fx_rates`.
+The Postgres CDC source is **pre-provisioned** for instructor-led (you do not create it in this lab). Open **Connectors** and confirm it is **Running** with table include list covering `riverpay.customer_profiles` and `riverpay.fx_rates`.
 
+> [!NOTE]
+> Building the CDC connector from scratch is out of scope for this path.
 ### Step 3: Flink compute pool
 
 1. Open **Flink** → your compute pool → **SQL workspace**

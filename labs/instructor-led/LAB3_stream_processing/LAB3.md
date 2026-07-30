@@ -14,7 +14,7 @@ Build the two RiverPay Flink data products that Tableflow will publish later:
 Completed **[LAB 2](../LAB2_explore_environment/LAB2.md)**. Flink SQL workspace open with correct catalog/database.
 
 > [!TIP]
-> Create several empty cells before you start. Prefer `CREATE OR ALTER MATERIALIZED TABLE` so re-runs are safe.
+> Create several empty cells before you start. Prefer `CREATE OR ALTER MATERIALIZED TABLE` so re-runs are safe. Run each `SET 'client.statement-name' …` in the **same cell** as its `CREATE` (workspace ignores a lone `SET`).
 
 ## Steps
 
@@ -26,9 +26,19 @@ SELECT * FROM `riverflow.riverpay.fx_rates` LIMIT 10;
 SELECT * FROM `riverflow.payments.initiation` LIMIT 5;
 ```
 
-### Step 2: Configure changelog modes / watermarks (if not already set)
+### Step 2: Confirm changelog modes / watermarks
 
-Ask the instructor whether these ALTERs were pre-applied. If not, run:
+Terraform pre-applies changelog.mode and watermarks on CDC and lifecycle source tables (Azure and AWS). Spot-check one of each:
+
+```sql
+SHOW CREATE TABLE `riverflow.riverpay.customer_profiles`;
+SHOW CREATE TABLE `riverflow.payments.initiation`;
+```
+
+**Expected result:** upsert + compact on profiles/FX; append on lifecycle topics; `$rowtime` watermarks present.
+
+<details>
+<summary>Fallback — only if SHOW CREATE looks incomplete</summary>
 
 ```sql
 ALTER TABLE `riverflow.riverpay.customer_profiles`
@@ -40,15 +50,36 @@ ALTER TABLE `riverflow.riverpay.fx_rates`
   SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');
 ALTER TABLE `riverflow.riverpay.fx_rates`
   MODIFY WATERMARK FOR `$rowtime` AS `$rowtime` - INTERVAL '5' SECOND;
+
+ALTER TABLE `riverflow.payments.initiation`
+  SET ('changelog.mode' = 'append');
+ALTER TABLE `riverflow.payments.initiation`
+  MODIFY WATERMARK FOR `$rowtime` AS `$rowtime` - INTERVAL '5' SECOND;
+
+ALTER TABLE `riverflow.payments.authorization`
+  SET ('changelog.mode' = 'append');
+ALTER TABLE `riverflow.payments.authorization`
+  MODIFY WATERMARK FOR `$rowtime` AS `$rowtime` - INTERVAL '5' SECOND;
+
+ALTER TABLE `riverflow.payments.balance_update`
+  SET ('changelog.mode' = 'append');
+ALTER TABLE `riverflow.payments.balance_update`
+  MODIFY WATERMARK FOR `$rowtime` AS `$rowtime` - INTERVAL '5' SECOND;
+
+ALTER TABLE `riverflow.payments.status`
+  SET ('changelog.mode' = 'append');
+ALTER TABLE `riverflow.payments.status`
+  MODIFY WATERMARK FOR `$rowtime` AS `$rowtime` - INTERVAL '5' SECOND;
 ```
 
-Apply append + watermark patterns on the four lifecycle topics as directed by the instructor (see `flink/risk_score.sql` / `flink/fx_conversion.sql`).
+</details>
 
 ### Step 3: Completed payments + FX conversion
 
 Reference: [`flink/fx_conversion.sql`](../../../flink/fx_conversion.sql)
 
 ```sql
+SET 'client.statement-name' = 'riverflow-payments-completed';
 CREATE OR ALTER MATERIALIZED TABLE `riverflow_payments` AS
 SELECT
   i.`payment_id`,
@@ -90,6 +121,7 @@ Reference: [`flink/risk_udf.sql`](../../../flink/risk_udf.sql)
 The function `lookup_operational_risk(amount, segment, account_tier)` calls the shared Risk Scoring API and returns `risk_score|risk_reason`.
 
 ```sql
+SET 'client.statement-name' = 'riverflow-payments-risk-score';
 CREATE OR ALTER MATERIALIZED TABLE `riverflow_payments_risk_score` AS
 SELECT
   enriched.`payment_id`,

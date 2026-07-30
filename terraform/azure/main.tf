@@ -53,6 +53,15 @@ locals {
   databricks_workspace_id  = local.create_workspace ? module.databricks_workspace.workspace_id : null
 
   effective_access_connector_id = local.use_shared ? var.shared_dbx_access_connector_id : module.databricks_access_connector[0].access_connector_id
+
+  customer_profiles_topic = "riverflow.riverpay.customer_profiles"
+  fx_rates_topic          = "riverflow.riverpay.fx_rates"
+  initiation_topic        = "riverflow.payments.initiation"
+  authorization_topic     = "riverflow.payments.authorization"
+  balance_update_topic    = "riverflow.payments.balance_update"
+  status_topic            = "riverflow.payments.status"
+  payments_topic          = "riverflow_payments"
+  risk_score_topic        = "riverflow_payments_risk_score"
 }
 
 # ===============================
@@ -551,5 +560,85 @@ resource "confluent_flink_statement" "risk_udf_function" {
   ]
 }
 
+# ===============================
+# Flink changelog.mode + watermarks (parity with AWS)
+# ===============================
+# Always apply ALTERs; MTs stay off (attendees write them in LAB3).
+# Risk CONNECTION/UDF stay on the Azure-specific resources above
+# (enable_risk_udf=false here to avoid duplicate statements).
+
+resource "null_resource" "wait_for_schemas" {
+  count = (var.enable_shadowtraffic && !local.use_shared) ? 1 : 0
+
+  triggers = {
+    script_hash = filesha256("${path.module}/scripts/wait_for_schemas.sh")
+    wire_format = "avro-v1"
+  }
+
+  depends_on = [
+    module.connectors,
+    module.topics,
+    null_resource.byo_shadowtraffic_deploy,
+  ]
+
+  provisioner "local-exec" {
+    environment = {
+      SR_URL    = module.confluent_platform.schema_registry_endpoint
+      SR_KEY    = module.confluent_platform.schema_registry_api_key
+      SR_SECRET = module.confluent_platform.schema_registry_api_secret
+    }
+    command = "bash ${path.module}/scripts/wait_for_schemas.sh"
+  }
+}
+
+resource "time_sleep" "wait_for_flink_catalog" {
+  create_duration = "30s"
+  depends_on = [
+    module.connectors,
+    module.topics,
+    null_resource.wait_for_schemas,
+  ]
+}
+
+module "flink_payments" {
+  source = "../modules/confluent-flink-payments"
+
+  organization_id            = module.confluent_platform.organization_id
+  environment_id             = module.confluent_platform.environment_id
+  environment_name           = module.confluent_platform.environment_name
+  kafka_cluster_id           = module.confluent_platform.kafka_cluster_id
+  kafka_cluster_display_name = module.confluent_platform.kafka_cluster_display_name
+  compute_pool_id            = module.flink.compute_pool_id
+  service_account_id         = module.confluent_platform.service_account_id
+  flink_api_key              = module.flink.flink_api_key
+  flink_api_secret           = module.flink.flink_api_secret
+  flink_rest_endpoint        = module.flink.flink_rest_endpoint
+
+  customer_profiles_topic = local.customer_profiles_topic
+  fx_rates_topic          = local.fx_rates_topic
+  initiation_topic        = local.initiation_topic
+  authorization_topic     = local.authorization_topic
+  balance_update_topic    = local.balance_update_topic
+  status_topic            = local.status_topic
+  payments_table_name     = local.payments_topic
+  risk_score_table_name   = local.risk_score_topic
+  schema_generation       = "avro-v5-alters-only"
+
+  cloud        = "AZURE"
+  cloud_region = var.cloud_region
+
+  # ALTERs only — risk UDF is registered by Azure-specific resources above
+  enable_risk_udf            = false
+  enable_materialized_tables = var.enable_flink_mts
+
+  depends_on = [
+    module.connectors,
+    module.topics,
+    null_resource.wait_for_schemas,
+    time_sleep.wait_for_flink_catalog,
+  ]
+}
+
 # NOTE: Flink materialized tables and Tableflow topic enablement are intentionally
-# omitted — attendees create those in labs/instructor-led LAB3–LAB4.
+# omitted when enable_flink_mts/enable_tableflow_topics are false — attendees
+# create those in labs/instructor-led LAB3–LAB4.

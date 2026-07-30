@@ -66,10 +66,15 @@ op run --env-file=.env.tpl -- wsa build -w /path/to/workshop-fsi-payments/wsa-sp
 export WSA_RUN_ID=<run-id from build>
 ./scripts/wsa-deploy-lifecycle-st.sh apply --run-id "$WSA_RUN_ID" --cloud azure --auto-approve
 # or: --cloud aws
+
+# 3) Dispenser CSV → Google Sheet (after passwords exist in 1Password)
+./bin/wsa dispenser-upload --sheets-credentials gmail-credentials.json \
+  -w /path/to/workshop-fsi-payments/wsa-spec-azure.yaml
 ```
 
 `wsa build` alone does **not** start lifecycle traffic when `enable_lifecycle_shadowtraffic: false`. Always run the aggregator script after a successful account phase.
 
+After dry-runs or rebuilds, use `dispenser-upload` **Overwrite** (or `--yes`) so reviewers are not handed claimed / previously used rows. Prefer a fresh claim for each dry-run reviewer.
 ### Shared-output → per-attendee injection
 
 WSA prefixes shared Terraform outputs with `shared_` → `TF_VAR_shared_*`.
@@ -111,7 +116,7 @@ Do **not** destroy shared before the lifecycle aggregator — the destroy provis
 - [ ] Both attendee clusters receive initiation → status
 - [ ] CDC topics still populated via fan-out
 - [ ] Flink: `SHOW CONNECTIONS` includes `riverpay_risk_api`; UDF present
-
+- [ ] Flink: `SHOW CREATE TABLE` on profiles + initiation shows changelog.mode + watermarks (Terraform ALTERs)
 ### Attendee path
 
 - [ ] LAB1–LAB5 as in [`labs/instructor-led/`](../labs/instructor-led/)

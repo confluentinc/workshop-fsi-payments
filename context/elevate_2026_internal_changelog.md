@@ -138,6 +138,7 @@ Requires `az login` on the apply host for `az acr build`.
 #### `terraform/azure/` (per attendee)
 
 - Confluent + Flink + CDC + lifecycle topics; **no** auto Flink MTs / Tableflow (`enable_flink_mts` / `enable_tableflow_topics` forced false).
+- **`module.flink_payments`**: changelog.mode + watermarks on CDC + lifecycle (same as AWS); `enable_risk_udf=false` in-module so Azure-specific CONNECTION/UDF resources stay authoritative.
 - Optional Risk CONNECTION + UDF pre-reg when endpoint + JAR present.
 - **Lifecycle ShadowTraffic** (`shadowtraffic.tf`): optional emergency/debug per-attendee kafka-only ST (`enable_lifecycle_shadowtraffic`, default **false**). Instructor-led uses `terraform/azure-lifecycle-st` + `scripts/wsa-deploy-lifecycle-st.sh` (one multi-Kafka container).
 
@@ -198,7 +199,7 @@ terraform/aws-demo/risk-api.tf
 | `enable_risk_udf` | **true** | n/a | **true** (needs endpoint) |
 | `enable_shadowtraffic` | true (full) | true (postgres-only) | n/a |
 | `enable_lifecycle_shadowtraffic` | n/a | n/a | **false** (use `*-lifecycle-st` aggregator) |
-| `enable_flink_mts` | true (via module) | n/a | **false** (guard) |
+| `enable_flink_mts` | true (via module) | n/a | **false** (ALTERs still via `flink_payments`) |
 | `enable_tableflow_topics` | true | n/a | **false** (guard) |
 
 ---
@@ -216,9 +217,12 @@ terraform/aws-demo/risk-api.tf
 
 ### Still open
 
-1. **Live smoke** — blocked in authoring env (`az` not installed). Checklist lives in `docs/operator-azure-elevate.md`.
+1. **Live smoke** — checklist in `docs/operator-instructor-led.md` / `docs/operator-azure-elevate.md`.
 2. **Azure self-service ShadowTraffic** — **addressed**: BYO datagen VM runs full ST + Risk API `:8089`; Elevate keeps shared ACA HTTPS.
-3. **Instructor-led lab polish from dry-run**
+3. **Instructor-led lab polish (Ahmed 2026-07-29)**
+   - **Addressed:** Azure mounts `confluent-flink-payments` for changelog/watermark ALTERs (MTs still off); LAB3 no longer “ask the instructor”; LAB2 clarifies CDC is pre-provisioned.
+   - **Deferred:** Attendee-created CDC connector (keep Terraform-provisioned until timing from Ahmed).
+   - **Addressed (docs):** reused dispenser / used-env guidance in operator guide + LAB1.
 4. **Promote `[Unreleased]` → `v0.2.0`** when cutting a release.
 5. **Optional:** Azure Flexible Server SSL quirks for ShadowTraffic postgres connection — validate on first apply; add `sslmode` if needed.
 

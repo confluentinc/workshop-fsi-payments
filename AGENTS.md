@@ -54,8 +54,9 @@ on ROSA yet.
 
 **Instructor-led vs demo:** Demo roots automate Flink MTs + Tableflow enablement.
 Instructor-led pre-provisions infra (Kafka, CDC, ShadowTraffic, Databricks,
-shared risk API URL + Flink CONNECTION/UDF registration) and leaves Flink SQL
-and Tableflow as attendee lab work.
+shared risk API URL + Flink CONNECTION/UDF registration, **and Flink
+changelog.mode + watermarks** on CDC/lifecycle sources) and leaves **Flink
+materialized-table SQL and Tableflow** as attendee lab work.
 
 ## Formalized topic / table names (Phase 1)
 
@@ -107,7 +108,7 @@ instructor-led Azure, `terraform/aws-demo/`, `terraform/aws/`, and
 - Delivery:
   - **Demo mode:** `aws-demo` (keep); Azure demo root for parity as needed.
   - **Self-service (BYO):** `terraform/aws` / `terraform/azure` (empty `shared_*`); accounts are self-signup — Flink queries and Tableflow are attendee work, same shape as instructor-led.
-  - **Instructor-led:** Azure or AWS shared infrastructure + per-attendee environments + multi-cluster lifecycle ST (patterned on [workshop-tableflow-databricks](https://github.com/confluentinc/workshop-tableflow-databricks)); Flink queries and Tableflow **not** auto-created — attendees build those.
+  - **Instructor-led:** Azure or AWS shared infrastructure + per-attendee environments + multi-cluster lifecycle ST (patterned on [workshop-tableflow-databricks](https://github.com/confluentinc/workshop-tableflow-databricks)); Flink MTs and Tableflow **not** auto-created — attendees build those. Changelog/watermark ALTERs are pre-applied on both clouds.
 - Genie: attendees must be able to answer the three RiverPulse business questions; document expected *shape* / guidance (not brittle golden rows that break when data drifts).
 
 Anything not on this list is Phase 2 backlog — see the runbook's "Phase 2 backlog"

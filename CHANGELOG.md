@@ -27,6 +27,8 @@ Detailed author notes: [`context/elevate_2026_internal_changelog.md`](context/el
 - Completed-payments Flink product includes FX enrichment
 - Risk scoring prefers external UDF over inline CASE (CASE remains fallback when UDF off)
 - RiverPulse Q2 window: 7 days → **24 hours** (`riverpulse_customer_risk_24h`); Q3 proxy notes FX enrichment on completed payments
+- Azure instructor-led: mount `confluent-flink-payments` for changelog/watermark ALTERs (MTs still off) — parity with AWS
+- Instructor-led LAB2/LAB3: CDC verify-only wording; LAB3 verifies pre-applied ALTERs (no “ask the instructor”)
 
 ## v0.1.2 - 2026-07-16
 
