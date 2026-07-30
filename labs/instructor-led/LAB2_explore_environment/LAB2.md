@@ -9,7 +9,6 @@ Tour the RiverPay pipeline that is already ingesting data: Postgres CDC (profile
 1. Inspect CDC topics for customer profiles and FX rates
 2. Inspect RiverFlow payment lifecycle topics
 3. Confirm Flink compute pool and `lookup_operational_risk` availability
-4. Note Databricks catalog/schema for later labs
 
 ### Prerequisites
 
@@ -19,7 +18,7 @@ Completed **[LAB 1](../LAB1_claim_account/LAB1.md)**.
 
 ### Step 1: Kafka topics (Confluent Cloud)
 
-In your environment → cluster → **Topics**, confirm messages on:
+In [Confluent Cloud](https://confluent.cloud/environments): your environment → cluster → **Topics**, confirm messages on:
 
 | Topic | Role |
 |-------|------|
@@ -40,17 +39,26 @@ The Postgres CDC source is **pre-provisioned** for instructor-led (you do not cr
 > Building the CDC connector from scratch is out of scope for this path.
 ### Step 3: Flink compute pool
 
-1. Open **Flink** → your compute pool → **SQL workspace**
-2. Set catalog = your environment, database = your Kafka cluster
-3. Run:
+1. Open **Flink** → **Compute pools**. Pick the workshop pool, **not** the default one. It is named `<team>_flink_compute_pool_<id>` — for example `wp001-tf-db_flink_compute_pool_16255802`, where `wp001` is your team prefix.
+2. Open its **SQL workspace**
+3. Set catalog = your environment, database = your Kafka cluster
+4. Run:
 
 ```sql
-SHOW FUNCTIONS;
+SHOW USER FUNCTIONS;
 -- Expect lookup_operational_risk when operators pre-registered the UDF
 
-SHOW CONNECTIONS;
+SHOW CONNECTIONS LIKE 'riverpay%';
 -- Expect riverpay_risk_api (HTTPS shared Risk Scoring API)
 ```
+
+> [!TIP]
+> Plain `SHOW FUNCTIONS;` lists every built-in function too (hundreds of rows, including operators like `%` and `<=`). `SHOW USER FUNCTIONS;` restricts the output to user-defined functions in the current catalog and database, so the workshop UDF is the only thing you see. For details on one function:
+>
+> ```sql
+> DESCRIBE FUNCTION EXTENDED lookup_operational_risk;
+> -- Shows kind, argument types, return type, and signature
+> ```
 
 ```sql
 SELECT lookup_operational_risk(12000, 'retail', 'standard');
@@ -59,11 +67,6 @@ SELECT lookup_operational_risk(12000, 'retail', 'standard');
 
 > [!NOTE]
 > You do **not** create infrastructure here. LAB 3 is where you write Flink SQL for the data products.
-
-### Step 4: Databricks orientation
-
-1. In Databricks, note your **catalog** and **schema** from the credentials email
-2. Confirm a SQL warehouse is available (you will use Genie in LAB 5)
 
 #### Checkpoint
 

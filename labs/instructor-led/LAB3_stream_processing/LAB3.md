@@ -40,17 +40,39 @@ SHOW CREATE TABLE `riverflow.payments.initiation`;
 <details>
 <summary>Fallback — only if SHOW CREATE looks incomplete</summary>
 
+Run these one at a time.
+
+Read the topic as a versioned table keyed by `customer_id` — the shape a temporal join needs on its right side, so each payment matches the profile version that was current when it happened. Compaction keeps the newest record per customer on the topic, so that state can always be rebuilt:
+
 ```sql
 ALTER TABLE `riverflow.riverpay.customer_profiles`
   SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');
+```
+
+Widen the out-of-order tolerance from Confluent's 180 ms default to 5 seconds, so profile updates that arrive slightly late still count in the join instead of being dropped:
+
+```sql
 ALTER TABLE `riverflow.riverpay.customer_profiles`
   MODIFY WATERMARK FOR `$rowtime` AS `$rowtime` - INTERVAL '5' SECOND;
+```
 
+Same for FX — a versioned table keyed by `currency_code`, so each payment converts at the rate that applied when it was initiated, not whatever the rate is now:
+
+```sql
 ALTER TABLE `riverflow.riverpay.fx_rates`
   SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');
+```
+
+Same 5-second tolerance for FX rows, so a rate that lands a little late still prices the payments it should:
+
+```sql
 ALTER TABLE `riverflow.riverpay.fx_rates`
   MODIFY WATERMARK FOR `$rowtime` AS `$rowtime` - INTERVAL '5' SECOND;
+```
 
+The four lifecycle topics are plain event streams, so they stay `append` — they just need the same 5-second tolerance:
+
+```sql
 ALTER TABLE `riverflow.payments.initiation`
   SET ('changelog.mode' = 'append');
 ALTER TABLE `riverflow.payments.initiation`
@@ -77,6 +99,8 @@ ALTER TABLE `riverflow.payments.status`
 ### Step 3: Completed payments + FX conversion
 
 Reference: [`flink/fx_conversion.sql`](../../../flink/fx_conversion.sql)
+
+A payment arrives as four separate events, one per topic — `initiation` (started), `authorization` (approved), `balance_update` (money moved), `status` (final outcome). Here you stitch those four back into one row per payment, and convert the amount to USD. The conversion uses a **temporal join** (`FOR SYSTEM_TIME AS OF`) to look up the FX rate as it stood at the moment the payment was initiated, rather than the rate right now — so a payment is always priced at the rate it actually got. A row appears only once all four stages have arrived, so this table is your list of genuinely completed payments.
 
 ```sql
 SET 'client.statement-name' = 'riverflow-payments-completed';
@@ -112,13 +136,26 @@ FROM `riverflow.payments.initiation` i
     ON fx.`currency_code` = i.`currency`;
 ```
 
+> [!NOTE]
+> **Why a materialized table?** A materialized table is a single object that owns both the schema and the query logic that keeps filling it — Flink creates a backing Kafka topic, registers the schema, and runs the query continuously, so new payments land in the table as they happen. That is also what makes it available to Tableflow and Databricks in LAB 4–5.
+>
+> Because schema and query live together, you can **evolve** them in place: `CREATE OR ALTER MATERIALIZED TABLE` lets you change the query or add a column and Flink migrates the table for you, instead of dropping the table, recreating it, and juggling offsets and downstream consumers.
+>
+> Reference: [Materialized Tables in Confluent Cloud for Apache Flink](https://docs.confluent.io/cloud/current/flink/concepts/materialized-tables.html)
+
+Query the new table to see what it produced:
+
+```sql
+SELECT * FROM `riverflow_payments`;
+```
+
 **Expected result:** Rows appear only for payments that completed all four stages, with `amount_usd` populated.
 
 ### Step 4: Operational risk via external UDF
 
 Reference: [`flink/risk_udf.sql`](../../../flink/risk_udf.sql)
 
-The function `lookup_operational_risk(amount, segment, account_tier)` calls the shared Risk Scoring API and returns `risk_score|risk_reason`.
+RiverPay's **Risk Scoring API** is the bank's system of record for how likely a payment needs manual intervention — a hold, a review, or a reject. The **UDF** `lookup_operational_risk(amount, segment, account_tier)` lets Flink ask that service in-stream, so every payment is scored as it happens instead of in an overnight batch. It returns `risk_score|risk_reason`; it only reads, it never updates the customer's profile.
 
 ```sql
 SET 'client.statement-name' = 'riverflow-payments-risk-score';

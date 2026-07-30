@@ -23,7 +23,7 @@ Operator guide: [`docs/operator-instructor-led.md`](../../docs/operator-instruct
 | Risk API `/health` fails | Container App not ready / wrong URL | `terraform output -raw risk_api_health_url` from azure-shared; check Container App revision in Azure Portal |
 | `/v1/risk` returns 401 | Bad or missing Bearer key | Use `terraform output -raw risk_api_key`; smoke: `services/risk-api/smoke.sh <endpoint> <key>` (bash script — run from Git Bash/WSL on Windows, or `curl` the endpoint directly from PowerShell) |
 | Flink UDF returns errors / empty risk | CONNECTION endpoint wrong or timeout | `SHOW CONNECTIONS;` expect `riverpay_risk_api` with **HTTPS** shared URL; UDF timeout is 2s — re-check API latency |
-| UDF not listed in `SHOW FUNCTIONS` | Pre-reg skipped | Set `shared_risk_api_endpoint` + JAR path; `enable_risk_udf=true`; re-apply attendee stack |
+| UDF not listed in `SHOW USER FUNCTIONS` | Pre-reg skipped | Set `shared_risk_api_endpoint` + JAR path; `enable_risk_udf=true`; re-apply attendee stack |
 
 ## Instructor-led (AWS) — Risk API / UDF
 
@@ -36,7 +36,7 @@ container on the shared Postgres EC2 host (`http://<host>:8089`) — no build/re
 | Risk API unreachable from Confluent Cloud | Security group blocks 8089 | Confirm `allowed_cidr_blocks` on aws-shared includes Confluent Cloud egress / `0.0.0.0/0` for the workshop; `curl http://<host>:8089/health` from the host itself first |
 | `/v1/risk` returns 401 | Bad or missing Bearer key | Use `terraform output -raw risk_api_key` from aws-shared; smoke: `services/risk-api/smoke.sh <endpoint> <key>` |
 | Flink UDF returns errors / empty risk | CONNECTION endpoint wrong scheme | `SHOW CONNECTIONS;` expect `riverpay_risk_api` with a **plain HTTP** (not HTTPS) shared URL — using `https://` against the AWS EC2 endpoint will fail |
-| UDF not listed in `SHOW FUNCTIONS` | Pre-reg skipped | Set `shared_risk_api_endpoint` + JAR path; `enable_risk_udf=true`; re-apply attendee stack |
+| UDF not listed in `SHOW USER FUNCTIONS` | Pre-reg skipped | Set `shared_risk_api_endpoint` + JAR path; `enable_risk_udf=true`; re-apply attendee stack |
 
 ## Demo / Self-service — Risk API / ShadowTraffic (BYO)
 

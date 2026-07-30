@@ -71,10 +71,10 @@ Confirm Risk API URL is `http://<datagen-ip>:8089`, and note Flink + Databricks 
 4. In Flink SQL:
 
 ```sql
-SHOW FUNCTIONS;
--- Expect lookup_operational_risk
+SHOW USER FUNCTIONS;
+-- Expect lookup_operational_risk (user-defined functions only, so no built-in noise)
 
-SHOW CONNECTIONS;
+SHOW CONNECTIONS LIKE 'riverpay%';
 -- Expect riverpay_risk_api
 
 SELECT lookup_operational_risk(12000, 'retail', 'standard');
