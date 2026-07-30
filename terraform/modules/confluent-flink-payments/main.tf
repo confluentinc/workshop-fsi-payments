@@ -542,13 +542,11 @@ resource "confluent_flink_materialized_table" "payments_risk_score" {
     secret = var.flink_api_secret
   }
 
-  depends_on = concat(
-    [
-      confluent_flink_statement.profile_watermark,
-      confluent_flink_statement.initiation_watermark,
-    ],
-    var.enable_risk_udf ? [confluent_flink_statement.risk_udf_function[0]] : [],
-  )
+  depends_on = [
+    confluent_flink_statement.profile_watermark,
+    confluent_flink_statement.initiation_watermark,
+    confluent_flink_statement.risk_udf_function,
+  ]
 
   lifecycle {
     prevent_destroy      = false
