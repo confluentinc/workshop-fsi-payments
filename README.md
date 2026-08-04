@@ -18,6 +18,8 @@ This hands-on workshop demonstrates a **real-time instant-payments operations pi
 
 You will ingest customer profiles and FX rates via CDC, stream RiverFlow payment lifecycle events (multi-currency), enrich them with Flink to create two data products — *completed payments* (with FX temporal join) and an operational *risk_score* (profile temporal join + external risk UDF) — then sync those products via Tableflow into Databricks Genie (*RiverPulse*).
 
+![Architecture diagram](assets/architecture.png)
+
 ## 🏦 Use Case
 
 RiverPay's partner banks need instant-payments parity, but ops tooling is still batch-based. End-of-day reports cannot answer: *which payment needs attention right now?* This workshop is an **operational-visibility story** where `risk_score` means operational exception probability — not fraud.
@@ -88,97 +90,6 @@ Full narrative skin: [`USECASE.md`](USECASE.md). Architecture notes: [`context/f
 | Status | ShadowTraffic → Kafka | `riverflow.payments.status` | No |
 | Completed payments | Flink MT (inner join + FX TTJ) | `riverflow_payments` | Yes (append) |
 | Risk score | Flink MT (profile TTJ + risk UDF) | `riverflow_payments_risk_score` | Yes (upsert) |
-
-<details>
-<summary>Architecture diagram</summary>
-
-```mermaid
-flowchart LR
-    ST["ShadowTraffic"]
-    PG[("Postgres<br/>profiles + fx_rates")]
-    RISK["Risk Scoring API<br/>HTTPS / shared"]
-
-    subgraph SRC["Source Systems"]
-        ST
-        PG
-        RISK
-    end
-
-    CDC["Postgres CDC<br/>Source Connector"]
-    T_CDC["riverflow.riverpay.customer_profiles"]
-    T_FX["riverflow.riverpay.fx_rates"]
-    T_INIT["riverflow.payments.initiation"]
-    T_AUTH["riverflow.payments.authorization"]
-    T_BAL["riverflow.payments.balance_update"]
-    T_STAT["riverflow.payments.status"]
-    T_PAY[("riverflow_payments<br/>completed / append")]
-    T_RISK[("riverflow_payments_risk_score<br/>upsert")]
-    FLINK_PAY{{"Flink<br/>4-way join + FX TTJ"}}
-    FLINK_RISK{{"Flink<br/>profile TTJ + risk UDF"}}
-    TF_PAY["Tableflow append<br/>+ data TTL"]
-    TF_RISK["Tableflow upsert<br/>+ data TTL"]
-
-    subgraph CC["Confluent Cloud — Phase 1"]
-        CDC
-        subgraph TOPICS["Kafka Sources"]
-            T_CDC
-            T_FX
-            T_INIT
-            T_AUTH
-            T_BAL
-            T_STAT
-        end
-        subgraph PRODUCTS["Flink Data Products"]
-            FLINK_PAY
-            FLINK_RISK
-            T_PAY
-            T_RISK
-        end
-        subgraph TF["Tableflow"]
-            TF_PAY
-            TF_RISK
-        end
-    end
-
-    DL[("Delta Lake /<br/>Unity Catalog")]
-    GENIE["RiverPulse / Genie"]
-
-    subgraph DBX["Databricks"]
-        DL
-        GENIE
-    end
-
-    ST --> PG
-    ST --> T_INIT
-    ST --> T_AUTH
-    ST --> T_BAL
-    ST --> T_STAT
-
-    PG --> CDC
-    CDC --> T_CDC
-    CDC --> T_FX
-
-    T_CDC --> FLINK_RISK
-    T_INIT --> FLINK_RISK
-    RISK -.->|"Flink CONNECTION + UDF"| FLINK_RISK
-    FLINK_RISK --> T_RISK
-
-    T_INIT --> FLINK_PAY
-    T_AUTH --> FLINK_PAY
-    T_BAL --> FLINK_PAY
-    T_STAT --> FLINK_PAY
-    T_FX --> FLINK_PAY
-    FLINK_PAY --> T_PAY
-
-    T_PAY --> TF_PAY
-    T_RISK --> TF_RISK
-
-    TF_PAY --> DL
-    TF_RISK --> DL
-    DL --> GENIE
-```
-
-</details>
 
 ## 🛠️ Technical Stack
 
