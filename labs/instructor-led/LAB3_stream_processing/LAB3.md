@@ -9,6 +9,8 @@ Build the two RiverPay Flink data products that Tableflow will publish later:
 
 `risk_score` is **operational exception probability**, not fraud.
 
+<img src="./assets/lab3.png" alt="RiverPay pipeline architecture: sources through Flink to Tableflow and Databricks" width="800">
+
 ### Prerequisites
 
 Completed **[LAB 2](../LAB2_explore_environment/LAB2.md)**. Flink SQL workspace open with correct catalog/database.
@@ -22,9 +24,21 @@ Completed **[LAB 2](../LAB2_explore_environment/LAB2.md)**. Flink SQL workspace 
 
 ```sql
 SELECT * FROM `riverflow.riverpay.customer_profiles` LIMIT 5;
+```
+
+<img src="./assets/lab3_step1_1.png" alt="Customer profiles query result" width="550">
+
+```sql
 SELECT * FROM `riverflow.riverpay.fx_rates` LIMIT 10;
+```
+
+<img src="./assets/lab3_step1_2.png" alt="FX rates query result" width="550">
+
+```sql
 SELECT * FROM `riverflow.payments.initiation` LIMIT 5;
 ```
+
+<img src="./assets/lab3_step1_3.png" alt="Payment initiation query result" width="550">
 
 ### Step 2: Confirm changelog modes / watermarks
 
@@ -32,10 +46,18 @@ Terraform pre-applies changelog.mode and watermarks on CDC and lifecycle source 
 
 ```sql
 SHOW CREATE TABLE `riverflow.riverpay.customer_profiles`;
+```
+
+<img src="./assets/lab3_step2_1.png" alt="SHOW CREATE TABLE result highlighting changelog.mode upsert and kafka.cleanup-policy compact" width="550">
+
+```sql
 SHOW CREATE TABLE `riverflow.payments.initiation`;
 ```
 
 **Expected result:** upsert + compact on profiles/FX; append on lifecycle topics; `$rowtime` watermarks present.
+
+> [!NOTE]
+> Profiles and FX rates are **upsert** because they're mutable reference data keyed by `customer_id` / `currency_code` — each new value replaces the old one, giving the temporal join a well-defined "current value per key" to look up. Lifecycle topics are **append** because each stage happens once per `payment_id`, so there's nothing to overwrite.
 
 <details>
 <summary>Fallback — only if SHOW CREATE looks incomplete</summary>
@@ -100,7 +122,13 @@ ALTER TABLE `riverflow.payments.status`
 
 Reference: [`flink/fx_conversion.sql`](../../../flink/fx_conversion.sql)
 
-A payment arrives as four separate events, one per topic — `initiation` (started), `authorization` (approved), `balance_update` (money moved), `status` (final outcome). Here you stitch those four back into one row per payment, and convert the amount to USD. The conversion uses a **temporal join** (`FOR SYSTEM_TIME AS OF`) to look up the FX rate as it stood at the moment the payment was initiated, rather than the rate right now — so a payment is always priced at the rate it actually got. A row appears only once all four stages have arrived, so this table is your list of genuinely completed payments.
+A payment arrives as four separate events, one per topic — `initiation` (started), `authorization` (approved), `balance_update` (money moved), `status` (final outcome). Here you stitch those four back into one row per payment, and convert the amount to USD. The conversion uses a **[temporal join](https://docs.confluent.io/cloud/current/flink/reference/queries/joins.html#temporal-joins)** (`FOR SYSTEM_TIME AS OF`) to look up the FX rate as it stood at the moment the payment was initiated, rather than the rate right now — so a payment is always priced at the rate it actually got. A row appears only once all four stages have arrived, so this table is your list of genuinely completed payments.
+
+<img src="./assets/lab3_step3_1.png" alt="Pipeline diagram highlighting the lifecycle topics through Flink Temporal Table Join to Completed Payments" width="800">
+
+#### 🧩 Temporal Join Challenge
+
+Two blanks are left in the `JOIN` line below. Fill in the **FX rates table** to join against (Step 1 showed its rows) and the **watermark column** to join as-of (Step 2 confirmed it on every source table).
 
 ```sql
 SET 'client.statement-name' = 'riverflow-payments-completed';
@@ -132,7 +160,7 @@ FROM `riverflow.payments.initiation` i
     ON i.`payment_id` = b.`payment_id`
   INNER JOIN `riverflow.payments.status` s
     ON i.`payment_id` = s.`payment_id`
-  JOIN `riverflow.riverpay.fx_rates` FOR SYSTEM_TIME AS OF i.`$rowtime` AS fx
+  JOIN <FX_RATES_TABLE> FOR SYSTEM_TIME AS OF <WATERMARK_COLUMN> AS fx
     ON fx.`currency_code` = i.`currency`;
 ```
 
@@ -149,13 +177,24 @@ Query the new table to see what it produced:
 SELECT * FROM `riverflow_payments`;
 ```
 
+<img src="./assets/lab3_step3_2.png" alt="SELECT * FROM riverflow_payments result showing currency, rate_to_usd, and amount_usd columns" width="800">
+
 **Expected result:** Rows appear only for payments that completed all four stages, with `amount_usd` populated.
 
 ### Step 4: Operational risk via external UDF
 
 Reference: [`flink/risk_udf.sql`](../../../flink/risk_udf.sql)
 
-RiverPay's **Risk Scoring API** is the bank's system of record for how likely a payment needs manual intervention — a hold, a review, or a reject. The **UDF** `lookup_operational_risk(amount, segment, account_tier)` lets Flink ask that service in-stream, so every payment is scored as it happens instead of in an overnight batch. It returns `risk_score|risk_reason`; it only reads, it never updates the customer's profile.
+RiverPay's **Risk Scoring API** is the bank's system of record for how likely a payment needs manual intervention — a hold, a review, or a reject. The **[user-defined function](https://docs.confluent.io/cloud/current/flink/concepts/user-defined-functions.html)** (UDF) `lookup_operational_risk(amount, segment, account_tier)` lets Flink ask that service in-stream, so every payment is scored as it happens instead of in an overnight batch. It returns `risk_score|risk_reason`; it only reads, it never updates the customer's profile. Alongside `amount`, it takes two customer attributes from the profile:
+
+- `segment`: customer's relationship type — `retail`, `small_business`, `new_partner`, `wealth`
+- `account_tier`: customer's service tier — `standard` or `premium`
+
+<img src="./assets/lab3_step4_1.png" alt="Pipeline diagram highlighting Customer Profiles and Currency Rates through Flink UDF Lookup to Risk Score" width="800">
+
+#### 🧩 Risk UDF Challenge
+
+Two blanks are left in the `lookup_operational_risk(...)` call below. Fill in the **segment** and **account_tier** arguments — both come from the customer profile joined in as `c`.
 
 ```sql
 SET 'client.statement-name' = 'riverflow-payments-risk-score';
@@ -182,12 +221,20 @@ FROM (
     p.`currency`,
     p.`payment_type`,
     p.`initiated_at`,
-    lookup_operational_risk(p.`amount`, c.`segment`, c.`account_tier`) AS `risk_payload`
+    lookup_operational_risk(p.`amount`, <SEGMENT>, <ACCOUNT_TIER>) AS `risk_payload`
   FROM `riverflow.payments.initiation` p
     JOIN `riverflow.riverpay.customer_profiles` FOR SYSTEM_TIME AS OF p.`$rowtime` AS c
       ON c.`customer_id` = p.`customer_id`
 ) AS enriched;
 ```
+
+Query the new table to see what it produced:
+
+```sql
+SELECT * FROM `riverflow_payments_risk_score`;
+```
+
+<img src="./assets/lab3_step4_2.png" alt="SELECT * FROM riverflow_payments_risk_score result showing segment, account_tier, risk_score, and risk_reason columns" width="800">
 
 **Expected result:** Upsert rows with readable `risk_reason` values such as `amount_significantly_above_customer_baseline`, `new_partner_bank_customer`, `routine_instant_credit_transfer`.
 
