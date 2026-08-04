@@ -1,5 +1,7 @@
 # LAB 2: Explore Your Environment
 
+**Previous:** [LAB 1: Claim Your Account](../LAB1_claim_account/LAB1.md)
+
 ## Overview
 
 Tour the RiverPay pipeline that is already ingesting data: Postgres CDC (profiles + FX rates), RiverFlow lifecycle topics, Flink compute pool, and the pre-registered risk UDF connection.

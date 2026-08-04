@@ -1,5 +1,7 @@
 # LAB 2: Provision ROSA (Stage 1)
 
+**Previous:** [LAB 1: Account Setup](../LAB1_account_setup/LAB1.md)
+
 ## Overview
 
 Apply Stage 1 Terraform to create a VPC and a public **ROSA HCP** cluster with STS roles, managed OIDC, cluster-admin, and an HTPasswd demo user.

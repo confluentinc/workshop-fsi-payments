@@ -1,5 +1,7 @@
 # LAB 3: Deploy CFK and Observe (Stage 2)
 
+**Previous:** [LAB 2: Provision ROSA](../LAB2_provision_rosa/LAB2.md)
+
 ## Overview
 
 Apply Stage 2 Terraform to install **Confluent for Kubernetes**, deploy the Confluent Platform stack (KRaft quickstart-style), and start the **RiverPay-lite** producer. Open Control Center via **port-forward** (default). Optionally expose Control Center with an OpenShift route.

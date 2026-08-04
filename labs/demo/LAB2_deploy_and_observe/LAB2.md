@@ -1,5 +1,7 @@
 # LAB 2: Deploy and Observe
 
+**Previous:** [LAB 1: Account Setup](../LAB1_account_setup/LAB1.md)
+
 ## Overview
 
 A single `terraform apply` provisions the RiverPay pipeline: AWS + Postgres + ShadowTraffic, Confluent Cloud (CDC for profiles **and FX rates**, lifecycle topics, Flink completed-payments join **+ FX TTJ**, risk score via **profile TTJ + external UDF**, Tableflow **+ data TTL**), and Databricks Unity Catalog integration.

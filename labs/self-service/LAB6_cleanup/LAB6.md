@@ -1,5 +1,7 @@
 # LAB 6: Wrap-up & Cleanup
 
+**Previous:** [LAB 5: RiverPulse Analytics](../LAB5_riverpulse_analytics/LAB5.md)
+
 ## Overview
 
 Recap what you built, then destroy cloud resources so free-trial spend stops.

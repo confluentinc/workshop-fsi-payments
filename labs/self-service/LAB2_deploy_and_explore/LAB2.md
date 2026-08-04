@@ -1,5 +1,7 @@
 # LAB 2: Deploy & Explore
 
+**Previous:** [LAB 1: Account Setup](../LAB1_account_setup/LAB1.md)
+
 ## Overview
 
 Apply Terraform to provision RiverPay infra, then tour CDC, lifecycle topics, and the pre-registered risk UDF — the same explore shape as instructor-led LAB2, after a BYO deploy.

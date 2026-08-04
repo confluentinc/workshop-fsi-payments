@@ -1,5 +1,7 @@
 # LAB 4: Cleanup (cp-rosa)
 
+**Previous:** [LAB 3: Deploy CFK and Observe](../LAB3_deploy_and_observe/LAB3.md)
+
 ## Overview
 
 Tear down Stage 2 (CFK / Confluent Platform / producer), then Stage 1 (ROSA HCP + VPC). Order matters.

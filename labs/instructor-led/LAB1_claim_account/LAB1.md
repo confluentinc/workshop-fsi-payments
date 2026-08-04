@@ -37,6 +37,7 @@ You should receive credentials within a few minutes.
 | Unity Catalog name | Genie / SQL later |
 | Schema name | Usually your Kafka cluster ID |
 | SQL Warehouse ID | Genie / SQL |
+| Databricks service principal client ID / secret | Tableflow catalog integration in LAB 4 |
 | Risk API note (if provided) | Shared URL is already bound in Flink as `riverpay_risk_api` |
 
 ### Step 3: Verify Confluent Cloud

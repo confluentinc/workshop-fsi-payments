@@ -1,5 +1,7 @@
 # LAB 5: RiverPulse Analytics (Genie)
 
+**Previous:** [LAB 4: Tableflow](../LAB4_tableflow/LAB4.md)
+
 ## Overview
 
 Use Databricks Genie to answer RiverPay’s three operational questions against Tableflow tables.

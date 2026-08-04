@@ -1,5 +1,7 @@
 # LAB 3: Stream Processing (Flink)
 
+**Previous:** [LAB 2: Deploy & Explore](../LAB2_deploy_and_explore/LAB2.md)
+
 ## Overview
 
 Build the two RiverPay Flink data products that Tableflow will publish later:

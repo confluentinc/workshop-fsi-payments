@@ -1,5 +1,7 @@
 # LAB 1: Account Setup (cp-rosa)
 
+**Previous:** [LAB 0: Prerequisites](../LAB0_prerequisites/LAB0.md)
+
 ## Overview
 
 Enable ROSA on AWS, obtain an OCM token, and fill Stage 1 `terraform.tfvars`.

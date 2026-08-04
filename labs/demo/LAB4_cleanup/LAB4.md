@@ -1,5 +1,7 @@
 # LAB 4: Resource Cleanup
 
+**Previous:** [LAB 3: RiverPulse Analytics](../LAB3_riverpulse_analytics/LAB3.md)
+
 ## Overview
 
 Destroy all demo resources. Demo mode provisioned Tableflow topics and Flink statements via Terraform, so cleanup is mostly a single destroy.

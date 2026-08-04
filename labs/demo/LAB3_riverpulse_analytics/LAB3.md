@@ -1,5 +1,7 @@
 # LAB 3: RiverPulse Analytics
 
+**Previous:** [LAB 2: Deploy and Observe](../LAB2_deploy_and_observe/LAB2.md)
+
 ## Overview
 
 Your pipeline is streaming. Use Databricks Genie (RiverPulse) to answer the three operational questions that matter to RiverPay ops — without waiting for an end-of-day batch report.

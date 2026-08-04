@@ -1,5 +1,7 @@
 # LAB 6: Wrap Up
 
+**Previous:** [LAB 5: RiverPulse Analytics](../LAB5_riverpulse_analytics/LAB5.md)
+
 ## Overview
 
 Recap what you built and how it maps to Confluent + Databricks for real-time payments ops.

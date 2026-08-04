@@ -1,5 +1,7 @@
 # LAB 4: Tableflow
 
+**Previous:** [LAB 3: Stream Processing](../LAB3_stream_processing/LAB3.md)
+
 ## Overview
 
 Publish the Flink data products to Databricks Unity Catalog with Tableflow (Delta). Discuss **data TTL / right-to-forget** as a governance talking point for payment ops.

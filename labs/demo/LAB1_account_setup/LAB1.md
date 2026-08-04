@@ -1,5 +1,7 @@
 # LAB 1: Account Setup
 
+**Previous:** [LAB 0: Prerequisites](../LAB0_prerequisites/LAB0.md)
+
 ## Overview
 
 Configure Confluent Cloud, Databricks, and AWS credentials for the RiverPay demo Terraform apply.
