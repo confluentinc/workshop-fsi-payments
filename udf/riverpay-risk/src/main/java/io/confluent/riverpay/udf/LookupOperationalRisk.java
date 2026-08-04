@@ -21,7 +21,8 @@ import org.apache.flink.table.functions.ScalarFunction;
  */
 public class LookupOperationalRisk extends ScalarFunction {
 
-  private static final Duration TIMEOUT = Duration.ofMillis(2000);
+  /** Per-request timeout (Flink → shared Risk API over public HTTPS can spike). */
+  private static final Duration TIMEOUT = Duration.ofSeconds(4);
 
   private transient HttpClient httpClient;
   private transient String endpoint;
@@ -30,9 +31,15 @@ public class LookupOperationalRisk extends ScalarFunction {
   @Override
   public void open(FunctionContext context) throws Exception {
     this.endpoint = context.getJobParameter("riverpay_risk_api.endpoint", null);
-    this.apiKey = context.getJobParameter("riverpay_risk_api.api-key", null);
+    // CREATE CONNECTION uses 'token' (bearer); older docs/examples used 'api-key'.
+    // Confluent injects the property name used in CREATE CONNECTION into getJobParameter.
+    String token = context.getJobParameter("riverpay_risk_api.token", null);
+    if (token == null || token.isBlank()) {
+      token = context.getJobParameter("riverpay_risk_api.api-key", null);
+    }
+    this.apiKey = token;
     this.httpClient =
-        HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
+        HttpClient.newBuilder().connectTimeout(TIMEOUT).build();
   }
 
   public String eval(Double amount, String segment, String accountTier) {

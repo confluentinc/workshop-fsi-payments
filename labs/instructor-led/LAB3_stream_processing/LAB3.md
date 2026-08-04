@@ -195,6 +195,12 @@ SELECT * FROM `riverflow_payments`;
 
 **Expected result:** Rows appear only for payments that completed all four stages, with `amount_usd` populated.
 
+Validate (SQL workspace or left-pane MT preview / descriptor):
+
+```sql
+SELECT * FROM `riverflow_payments` LIMIT 10;
+```
+
 ### Step 4: Operational risk via external UDF
 
 Reference: [`flink/risk_udf.sql`](../../../flink/risk_udf.sql)
@@ -209,6 +215,8 @@ RiverPay's **Risk Scoring API** is the bank's system of record for how likely a 
 #### 🧩 Risk UDF Challenge
 
 Two blanks are left in the `lookup_operational_risk(...)` call below. Fill in the **segment** and **account_tier** arguments — both come from the customer profile joined in as `c`.
+
+`segment` and `account_tier` come from the **customer profile** (temporal join), not the payment event — payment carries `amount` / `currency`; the profile supplies slowly changing customer context used as risk inputs.
 
 ```sql
 SET 'client.statement-name' = 'riverflow-payments-risk-score';
@@ -253,7 +261,7 @@ SELECT * FROM `riverflow_payments_risk_score`;
 
 <img src="./assets/lab3_step4_2.png" alt="SELECT * FROM riverflow_payments_risk_score result showing segment, account_tier, risk_score, and risk_reason columns" width="800">
 
-**Expected result:** Upsert rows with readable `risk_reason` values such as `amount_significantly_above_customer_baseline`, `new_partner_bank_customer`, `routine_instant_credit_transfer`.
+**Expected result:** Upsert rows with readable `risk_reason` values such as `amount_significantly_above_customer_baseline`, `new_partner_bank_customer`, `routine_instant_credit_transfer`. Soft-fail reasons (`risk_api_*`) mean the shared API call failed — see LAB 2 / troubleshooting.
 
 #### Checkpoint
 

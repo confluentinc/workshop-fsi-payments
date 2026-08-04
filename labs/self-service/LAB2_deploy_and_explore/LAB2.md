@@ -80,7 +80,13 @@ SHOW CONNECTIONS LIKE 'riverpay%';
 -- Expect riverpay_risk_api
 
 SELECT lookup_operational_risk(12000, 'retail', 'standard');
+-- Expect e.g. 0.85|amount_significantly_above_customer_baseline
+-- First call can take ~1 minute (cold Flink + Risk API HTTPS/HTTP)
 ```
+
+> Soft-fail payloads use `0.28|risk_api_*` (endpoint missing, HTTP status, or timeout/network) — not a real score. Healthy low-risk is `0.28|routine_instant_credit_transfer`.
+>
+> If you see a soft-fail, re-run the same `SELECT` once or twice — occasional Flink→Risk API blips are expected.
 
 5. Confirm Flink MTs for completed payments / risk_score are **not** present yet (you create them in LAB 3)
 

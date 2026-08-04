@@ -7,7 +7,7 @@
 3. **Flink data products**
    - `riverflow_payments` — completed payments (4-way inner join + FX temporal join, append)
    - `riverflow_payments_risk_score` — operational risk (profile temporal join + external risk UDF, upsert)
-4. **Serve** — Tableflow those two products into Unity Catalog (with data TTL / right-to-forget)
+4. **Serve** — Tableflow those two products into Unity Catalog
 5. **Act** — RiverPulse / Genie answers to three ops questions
 
 ## Talking points
@@ -18,7 +18,7 @@
 - Completed-payments product only emits when all four stages match
 - Stall / in-flight stage drill-down is Phase 2 backlog
 - Light PII + CSFLE is a talking point, not a deep dive
-- Tableflow removes custom lakehouse pipeline toil for Marcus (data platform); TTL bounds retention for ops/GDPR narrative
+- Tableflow removes custom lakehouse pipeline toil for Marcus (data platform)
 - Genie closes the loop for Dana (ops)
 
 ## Three business questions (keep consistent)

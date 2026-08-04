@@ -57,6 +57,8 @@ Hands-on path for attendees: `labs/demo/` (LAB0–LAB4) for demo mode, or
 
 **You say:** "Customer profiles and FX rates live in Postgres and flow in via CDC. Payment events stream into Kafka across initiation, authorization, balance update, and status. Flink builds two data products: completed payments via a four-way inner join plus an FX temporal join for USD-normalized amounts, and an operational `risk_score` via a profile temporal join plus an external risk UDF — exception probability, not fraud. Tableflow publishes those two products to Unity Catalog (with a right-to-forget / TTL talking point) so Genie can answer questions live."
 
+**You say (profile vs payment):** "`segment` and `account_tier` live on the customer profile, not on the payment. The payment carries amount and currency; we temporal-join the profile at initiation time to feed those attributes into the risk UDF — that's the enrichment pattern, not denormalizing segment onto every payment event."
+
 **You say (portability note):** "This is Cloud-first. The same design is intended to run on Confluent Platform and Private Cloud too — worth noting for anyone planning Cloud now, CP/CPC later." *(Internal note: CP/CPC hasn't been built or validated yet — don't imply it's been demonstrated if a customer presses for specifics.)*
 
 **Participants do:** Ask clarifying questions on topic design.
@@ -97,6 +99,9 @@ Hands-on path for attendees: `labs/demo/` (LAB0–LAB4) for demo mode, or
 
 * No CDC data → check connector + Postgres; see troubleshooting doc
 * Empty risk table → confirm ShadowTraffic + Risk API + UDF CONNECTION; wait 1–2 minutes
+* First `lookup_operational_risk` smoke test slow → normal cold path (~1 min); past ~2 min → CONNECTION / Risk API
+* Smoke/`risk_reason` shows `risk_api_error` / `risk_api_http_*` → soft-fail from UDF (timeout, bad token, API down); not a real score — smoke the shared Risk API
 * Empty `amount_usd` / FX join misses → confirm `riverflow.riverpay.fx_rates` CDC + watermarks
+* "Is risk an upsert?" → clarify: *profiles* (and FX) are upsert CDC sources for TTJ; initiation is append; Phase 1 risk MT is one enrichment per initiation (often append changelog). Diagram "upsert" means Tableflow framing of current risk per `payment_id` — verify with `SHOW CREATE TABLE` if challenged
 * Genie empty → wait for Tableflow sync; fall back to SQL views
 * Destroy/apply issues → LAB4 (demo) or operator azure teardown + shared troubleshooting

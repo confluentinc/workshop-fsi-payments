@@ -4,14 +4,14 @@
 
 ## Overview
 
-A single `terraform apply` provisions the RiverPay pipeline: AWS + Postgres + ShadowTraffic, Confluent Cloud (CDC for profiles **and FX rates**, lifecycle topics, Flink completed-payments join **+ FX TTJ**, risk score via **profile TTJ + external UDF**, Tableflow **+ data TTL**), and Databricks Unity Catalog integration.
+A single `terraform apply` provisions the RiverPay pipeline: AWS + Postgres + ShadowTraffic, Confluent Cloud (CDC for profiles **and FX rates**, lifecycle topics, Flink completed-payments join **+ FX TTJ**, risk score via **profile TTJ + external UDF**, Tableflow), and Databricks Unity Catalog integration.
 
 ### What Terraform Creates
 
 | Layer | Resources |
 |-------|-----------|
 | **AWS** | VPC, EC2 (PostgreSQL + ShadowTraffic + Risk API `:8089`), S3, IAM |
-| **Confluent Cloud** | Environment, Standard Kafka cluster, Schema Registry, Flink compute pool, Postgres CDC (`customer_profiles` + `fx_rates`), lifecycle topics, Flink MTs (`riverflow_payments`, `riverflow_payments_risk_score`), risk UDF artifact/CONNECTION (default on), Tableflow on those two products (with data TTL) + UC catalog integration |
+| **Confluent Cloud** | Environment, Standard Kafka cluster, Schema Registry, Flink compute pool, Postgres CDC (`customer_profiles` + `fx_rates`), lifecycle topics, Flink MTs (`riverflow_payments`, `riverflow_payments_risk_score`), risk UDF artifact/CONNECTION (default on), Tableflow on those two products + UC catalog integration |
 | **Databricks** | Storage credential, external location, catalog, RiverPulse SQL views |
 
 ### Prerequisites
@@ -42,7 +42,7 @@ Use the idle apply time — don’t leave a silent gap:
 
 1. Walk the [architecture diagram](../../../README.md#architecture) (source → stream → Flink products → Tableflow → Genie)
 2. Introduce personas from [`USECASE.md`](../../../USECASE.md) (Dana / Marcus)
-3. Preview the CSFLE + **Tableflow TTL / right-to-forget** talking points (light PII on profiles — not full labs)
+3. Preview the **CSFLE** talking point (light PII on profiles — not full labs)
 4. Bookmark Genie prompts: [`sql/genie_prompts.md`](../../../sql/genie_prompts.md)
 
 ### Step 2: Review Outputs
@@ -92,13 +92,13 @@ demo_status = {
 5. Open Flink data products:
    - `riverflow_payments` — completed payments (4-way inner join + FX TTJ → `amount_usd`)
    - `riverflow_payments_risk_score` — `risk_score` / `risk_reason` from external UDF
-6. Confirm Tableflow is enabled on those **two** products (not the raw lifecycle topics) and note **data TTL** / retention for the right-to-forget talking point
+6. Confirm Tableflow is enabled on those **two** products (not the raw lifecycle topics)
 7. Optional — `terraform output risk_api_url` and curl `/health` on the demo Risk API
 
 > [!TIP]
-> **CSFLE + TTL talking points (keep brief)**
+> **CSFLE talking point (keep brief)**
 >
-> Profile rows include light PII fields (`full_name`, `tax_id`, `date_of_birth`). In production, RiverPay would protect these with CSFLE. Tableflow **data TTL** supports retention / right-to-forget. This workshop does not walk through full CSFLE setup — call both out and move on.
+> Profile rows include light PII fields (`full_name`, `tax_id`, `date_of_birth`). In production, RiverPay would protect these with CSFLE. This workshop does not walk through full CSFLE setup — call it out and move on.
 
 ### Step 4: Observe Databricks
 

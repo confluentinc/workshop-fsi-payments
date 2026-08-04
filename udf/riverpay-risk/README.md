@@ -15,7 +15,7 @@ docker run --rm -v "$PWD":/ws -w /ws maven:3.9-eclipse-temurin-11 \
 mkdir -p dist && cp -f target/riverpay-risk-udf-1.0.0.jar dist/
 ```
 
-HTTP client timeout is 2s (HTTPS RTT to Azure Container Apps).
+HTTP client timeout is 4s (HTTPS RTT to Azure Container Apps / Confluent egress).
 
 ## Register (per Confluent environment)
 

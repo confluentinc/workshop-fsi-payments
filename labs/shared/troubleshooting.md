@@ -22,7 +22,10 @@ Operator guide: [`docs/operator-instructor-led.md`](../../docs/operator-instruct
 | `az acr build` fails during azure-shared | Azure CLI missing / wrong subscription | Install `az`, `az login` (or set `ARM_*`); confirm SP can create ACR |
 | Risk API `/health` fails | Container App not ready / wrong URL | `terraform output -raw risk_api_health_url` from azure-shared; check Container App revision in Azure Portal |
 | `/v1/risk` returns 401 | Bad or missing Bearer key | Use `terraform output -raw risk_api_key`; smoke: `services/risk-api/smoke.sh <endpoint> <key>` (bash script — run from Git Bash/WSL on Windows, or `curl` the endpoint directly from PowerShell) |
-| Flink UDF returns errors / empty risk | CONNECTION endpoint wrong or timeout | `SHOW CONNECTIONS;` expect `riverpay_risk_api` with **HTTPS** shared URL; UDF timeout is 2s — re-check API latency |
+| Flink UDF returns errors / empty risk | CONNECTION endpoint wrong or timeout | `SHOW CONNECTIONS;` expect `riverpay_risk_api` with **HTTPS** shared URL; UDF timeout is 4s — re-check API latency; retry the smoke `SELECT` once or twice |
+| UDF returns `0.28\|risk_api_error` | Client exception (timeout, DNS, TLS) | Soft-fail in `LookupOperationalRisk` — not a scored reason. Retry the Flink `SELECT`; smoke `/health` + `/v1/risk`; confirm CONNECTION endpoint + bearer `token` |
+| UDF returns `0.28\|risk_api_http_401` (or other code) | Auth / HTTP failure | Match CONNECTION token to `risk_api_key` output; `risk_api_endpoint_missing` → CONNECTION not injected |
+| First UDF smoke takes ~1 minute | Cold Flink + HTTPS | Expected; re-run should be faster. Hang >~2 min → CONNECTION / API |
 | UDF not listed in `SHOW USER FUNCTIONS` | Pre-reg skipped | Set `shared_risk_api_endpoint` + JAR path; `enable_risk_udf=true`; re-apply attendee stack |
 
 ## Instructor-led (AWS) — Risk API / UDF
@@ -36,6 +39,8 @@ container on the shared Postgres EC2 host (`http://<host>:8089`) — no build/re
 | Risk API unreachable from Confluent Cloud | Security group blocks 8089 | Confirm `allowed_cidr_blocks` on aws-shared includes Confluent Cloud egress / `0.0.0.0/0` for the workshop; `curl http://<host>:8089/health` from the host itself first |
 | `/v1/risk` returns 401 | Bad or missing Bearer key | Use `terraform output -raw risk_api_key` from aws-shared; smoke: `services/risk-api/smoke.sh <endpoint> <key>` |
 | Flink UDF returns errors / empty risk | CONNECTION endpoint wrong scheme | `SHOW CONNECTIONS;` expect `riverpay_risk_api` with a **plain HTTP** (not HTTPS) shared URL — using `https://` against the AWS EC2 endpoint will fail |
+| UDF returns `0.28\|risk_api_*` | Soft-fail (timeout / HTTP / missing endpoint) | Same as Azure row above; smoke `http://<host>:8089/health` and `/v1/risk` with bearer key |
+| First UDF smoke takes ~1 minute | Cold Flink + API | Expected; hang >~2 min → CONNECTION / Risk API container |
 | UDF not listed in `SHOW USER FUNCTIONS` | Pre-reg skipped | Set `shared_risk_api_endpoint` + JAR path; `enable_risk_udf=true`; re-apply attendee stack |
 
 ## Demo / Self-service — Risk API / ShadowTraffic (BYO)

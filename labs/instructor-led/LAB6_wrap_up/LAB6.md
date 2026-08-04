@@ -11,7 +11,7 @@ Recap what you built and how it maps to Confluent + Databricks for real-time pay
 1. Claimed a pre-provisioned Confluent + Databricks environment
 2. Explored CDC (profiles + FX) and RiverFlow lifecycle streams
 3. Built Flink data products: completed payments with FX TTJ + risk via external UDF
-4. Enabled Tableflow (append + upsert) and discussed TTL / right-to-forget
+4. Enabled Tableflow (append + upsert)
 5. Answered the three RiverPulse business questions in Genie
 
 ## Architecture reminder

@@ -6,7 +6,7 @@ Welcome to the RiverPay workshop. Your instructor has pre-provisioned Confluent 
 
 ### What you'll accomplish
 
-1. Claim a workshop account via the instructor form
+1. Claim a workshop account
 2. Receive credentials by email
 3. Verify Confluent Cloud and Databricks access
 

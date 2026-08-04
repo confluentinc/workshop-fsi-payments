@@ -12,7 +12,7 @@ You:
 
 1. Signed up for BYO accounts and deployed RiverPay infra
 2. Built Flink data products (completed payments + FX + operational risk UDF)
-3. Enabled Tableflow with a TTL / right-to-forget talking point
+3. Enabled Tableflow
 4. Answered the three RiverPulse questions in Genie
 
 Compare modes anytime: [`labs/self-service/README.md`](../README.md).

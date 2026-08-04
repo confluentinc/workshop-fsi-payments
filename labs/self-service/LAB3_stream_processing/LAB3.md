@@ -153,11 +153,19 @@ SELECT * FROM `riverflow_payments`;
 
 **Expected result:** Rows appear only for payments that completed all four stages, with `amount_usd` populated.
 
+Validate (SQL workspace or left-pane MT preview / descriptor):
+
+```sql
+SELECT * FROM `riverflow_payments` LIMIT 10;
+```
+
 ### Step 4: Operational risk via external UDF
 
 Reference: [`flink/risk_udf.sql`](../../../flink/risk_udf.sql)
 
 RiverPay's **Risk Scoring API** is the bank's system of record for how likely a payment needs manual intervention — a hold, a review, or a reject. The **UDF** `lookup_operational_risk(amount, segment, account_tier)` lets Flink ask that service in-stream, so every payment is scored as it happens instead of in an overnight batch. It returns `risk_score|risk_reason`; it only reads, it never updates the customer's profile.
+
+`segment` and `account_tier` come from the **customer profile** (temporal join), not the payment event — payment carries `amount` / `currency`; the profile supplies slowly changing customer context used as risk inputs.
 
 ```sql
 SET 'client.statement-name' = 'riverflow-payments-risk-score';
@@ -191,7 +199,15 @@ FROM (
 ) AS enriched;
 ```
 
-**Expected result:** Upsert rows with readable `risk_reason` values such as `amount_significantly_above_customer_baseline`, `new_partner_bank_customer`, `routine_instant_credit_transfer`.
+**Expected result:** Rows with readable `risk_reason` values such as `amount_significantly_above_customer_baseline`, `new_partner_bank_customer`, `routine_instant_credit_transfer`. Soft-fail reasons (`risk_api_*`) mean the shared API call failed — see LAB 2 / troubleshooting.
+
+Validate:
+
+```sql
+SELECT * FROM `riverflow_payments_risk_score` LIMIT 10;
+```
+
+Or open the materialized table in the left pane and use its descriptor / preview.
 
 #### Checkpoint
 
