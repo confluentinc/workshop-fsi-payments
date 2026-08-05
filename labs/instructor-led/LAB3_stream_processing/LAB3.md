@@ -300,7 +300,7 @@ WITH risk_last_24h AS (
 SELECT * FROM risk_last_24h;
 ```
 
-Confirm it's a genuine upsert table, the same way you confirmed `customer_profiles`/`fx_rates` back in LAB2:
+Confirm it's a genuine upsert table, the same way you confirmed `customer_profiles`/`fx_rates` back in Step 2:
 
 ```sql
 SHOW CREATE TABLE `riverflow_customer_risk_exposure_24h`;
