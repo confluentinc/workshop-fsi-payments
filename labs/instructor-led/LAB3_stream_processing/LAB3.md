@@ -319,7 +319,8 @@ SELECT * FROM `riverflow_customer_risk_exposure_24h`;
 
 <img src="./assets/lab3_step5_2.png" alt="Query result showing one row per customer with payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
 
-You should see **100 rows — one per customer**, not one per payment, even though `payment_count` shows each customer has 75–110 payments behind their row. That collapse is the `PRIMARY KEY` doing its job. Sort by `avg_risk_score` to see who your ops team should be looking at first.
+> [!TIP]
+> One row per customer — 100 customers, 100 rows — each summarizing the 75–110 payments they've made in the last 24 hours. Every time that customer initiates a new payment, their row updates in place with a fresh exposure figure. Sort by `avg_risk_score` and you have Dana's worklist: the customers her team should be looking at first, current as of seconds ago.
 
 #### Checkpoint
 
