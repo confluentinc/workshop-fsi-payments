@@ -50,8 +50,8 @@ Create the Tableflow → Unity Catalog integration yourself:
 
 4. Copy your **Unity Catalog name** (from the email you received) and paste it into the Confluent Cloud form.
 
-   > [!TIP]
-   > The service principal's Unity Catalog permissions — Data editor + EXTERNAL USE SCHEMA — are pre-granted for instructor-led, so you don't need to set those up yourself.
+> [!TIP]
+> The service principal's Unity Catalog permissions — Data editor + EXTERNAL USE SCHEMA — are pre-granted for instructor-led, so you don't need to set those up yourself.
 
    <img src="./assets/lab4_step1_4.png" alt="Grant Unity Catalog permissions form with Data editor privilege preset and Unity Catalog name field" width="550">
 

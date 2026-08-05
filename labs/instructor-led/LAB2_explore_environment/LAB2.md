@@ -47,9 +47,10 @@ The Postgres CDC source is **pre-provisioned** for instructor-led (you do not cr
 1. Open **Flink** → **Compute pools**. Pick the workshop pool, **not** the default one. It is named `<team>_flink_compute_pool_<id>` — for example `wp001-tf-db_flink_compute_pool_16255802`, where `wp001` is your team prefix.
 2. Open its **SQL workspace**
 
-```sql
-SHOW USER FUNCTIONS;
--- Expect lookup_operational_risk when operators pre-registered the UDF
+    ```sql
+    SHOW USER FUNCTIONS;
+    -- Expect lookup_operational_risk when operators pre-registered the UDF
+    ```
 
 3. Set catalog = your environment, database = your Kafka cluster
 4. Run:
@@ -86,10 +87,6 @@ SHOW USER FUNCTIONS;
 > [!NOTE]
 > `lookup_operational_risk` calls the shared Risk Scoring API and returns a `score|reason` string given an amount, customer segment, and tier. The score (e.g. `0.42`) is an **operational exception probability** from 0.0 (routine) to 1.0 (near-certain exception) — how likely the payment is to need manual review, not a fraud score. `>= 0.5` is treated as "high risk" downstream. In **LAB 3**, you'll call this UDF from Flink SQL to build the `riverflow_payments_risk_score` data product.
 
-```sql
-SELECT lookup_operational_risk(12000, 'retail', 'standard');
--- Expect a string like: 0.85|amount_significantly_above_customer_baseline
-```
 
 > [!NOTE]
 > **Cold UDF latency:** the first `lookup_operational_risk(...)` call can take up to ~1 minute (Flink compute warm-up + HTTPS to the shared Risk API). Re-runs are usually much faster. If it hangs past ~2 minutes, check `SHOW CONNECTIONS` again or ask the instructor.
@@ -99,8 +96,6 @@ SELECT lookup_operational_risk(12000, 'retail', 'standard');
 >
 > **If you see a soft-fail** (`risk_api_error` / `risk_api_http_*`): re-run the same `SELECT` once or twice. Occasional Flink→Risk API blips are expected; a successful retry returns a readable score such as `0.85|amount_significantly_above_customer_baseline`.
 
-> [!NOTE]
-> You do **not** create infrastructure here. LAB 3 is where you write Flink SQL for the data products.
 
 #### Checkpoint
 
