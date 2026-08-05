@@ -56,3 +56,6 @@ shadowtraffic/connections*.json
 
 # Local content
 tmp/
+
+# Superpowers subagent-driven-development scratch workspace
+.superpowers/
