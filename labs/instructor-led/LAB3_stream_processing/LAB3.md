@@ -4,10 +4,11 @@
 
 ## Overview
 
-Build the two RiverPay Flink data products that Tableflow will publish later:
+### What you'll accomplish
 
 1. **`riverflow_payments`** — completed payments (4-way inner join + FX temporal join)
 2. **`riverflow_payments_risk_score`** — profile temporal join + external risk UDF
+3. Aggregate `riverflow_payments_risk_score` into `riverflow_customer_risk_exposure_24h` — a genuine upsert, trailing-24h per customer
 
 `risk_score` is **operational exception probability**, not fraud.
 
@@ -263,10 +264,70 @@ SELECT * FROM `riverflow_payments_risk_score`;
 
 **Expected result:** Upsert rows with readable `risk_reason` values such as `amount_significantly_above_customer_baseline`, `new_partner_bank_customer`, `routine_instant_credit_transfer`. Soft-fail reasons (`risk_api_*`) mean the shared API call failed — see LAB 2 / troubleshooting.
 
+### Step 5: Customer risk exposure (genuine upsert, trailing 24h)
+
+Reference: [`flink/customer_risk_exposure_24h.sql`](../../../flink/customer_risk_exposure_24h.sql)
+
+`riverflow_payments_risk_score` has one row per payment — a new payment never updates an old row, so its changelog is really append underneath the "upsert" label. Here you build a **second** data product that gives each customer's trailing-24-hour risk exposure, and it updates **immediately** on every new payment for that customer — not just when a window closes.
+
+The trick is an `OVER` window (not `GROUP BY`, not `HOP`/`TUMBLE`): it recomputes per event instead of waiting for a window boundary. Declaring `PRIMARY KEY (customer_id)` on the table is what collapses that per-event output down to one row per customer — Flink upserts by that key instead of appending a new row per payment.
+
+```sql
+SET 'client.statement-name' = 'riverflow-customer-risk-exposure-24h';
+CREATE OR ALTER MATERIALIZED TABLE `riverflow_customer_risk_exposure_24h` (
+  PRIMARY KEY (`customer_id`) NOT ENFORCED
+)
+WITH (
+  'changelog.mode' = 'upsert',
+  'kafka.cleanup-policy' = 'compact'
+) AS
+WITH risk_last_24h AS (
+  SELECT
+    `customer_id`,
+    `segment`,
+    `account_tier`,
+    COUNT(*) OVER w AS `payment_count`,
+    AVG(`risk_score`) OVER w AS `avg_risk_score`,
+    MAX(`risk_score`) OVER w AS `max_risk_score`,
+    `$rowtime` AS `updated_at`
+  FROM `riverflow_payments_risk_score`
+  WINDOW w AS (
+    PARTITION BY `customer_id`
+    ORDER BY `$rowtime`
+    RANGE BETWEEN INTERVAL '24' HOUR PRECEDING AND CURRENT ROW
+  )
+)
+SELECT * FROM risk_last_24h;
+```
+
+Confirm it's a genuine upsert table, the same way you confirmed `customer_profiles`/`fx_rates` back in LAB2:
+
+```sql
+SHOW CREATE TABLE `riverflow_customer_risk_exposure_24h`;
+```
+
+> [!NOTE]
+> Expect `'changelog.mode' = 'upsert'`, `'kafka.cleanup-policy' = 'compact'`, and a `CONSTRAINT ... PRIMARY KEY (\`customer_id\`) NOT ENFORCED` line in the output.
+
+Query the new table to see what it produced:
+
+```sql
+SELECT * FROM `riverflow_customer_risk_exposure_24h`;
+```
+
+> [!NOTE]
+> Results may take up to a minute to appear the first time.
+
+> [!NOTE]
+> **Known limitation:** a customer's row only refreshes when they have a *new* payment. If a customer goes quiet, their numbers stay frozen at their last-computed trailing-24h value instead of decaying — there's no background clock forcing recomputation. For this workshop's continuous traffic, that edge case rarely surfaces.
+
+**Expected result:** One row per customer. Re-run the `SELECT` after a minute or two and watch `payment_count`/`avg_risk_score` change for active customers as new payments arrive — that's the upsert in action.
+
 #### Checkpoint
 
 - [ ] `riverflow_payments` has completed payments with `rate_to_usd` / `amount_usd`
 - [ ] `riverflow_payments_risk_score` has `risk_score` + `risk_reason` from the UDF path
+- [ ] `riverflow_customer_risk_exposure_24h` is confirmed upsert via `SHOW CREATE TABLE`, and updates in place as new payments arrive
 
 ## Conclusion
 
