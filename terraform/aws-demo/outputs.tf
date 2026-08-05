@@ -1,14 +1,15 @@
 output "demo_status" {
   description = "High-level demo deployment status and links"
   value = {
-    environment_id     = module.confluent_platform.environment_id
-    kafka_cluster_id   = module.confluent_platform.kafka_cluster_id
-    flink_compute_pool = module.flink.compute_pool_id
-    payments_table     = module.flink_payments.payments_table_name
-    risk_score_table   = module.flink_payments.risk_score_table_name
-    tableflow_topics   = module.tableflow_payments.tableflow_topic_ids
-    databricks_catalog = databricks_catalog.main.name
-    databricks_schema  = module.databricks.databricks_schema_name
+    environment_id               = module.confluent_platform.environment_id
+    kafka_cluster_id             = module.confluent_platform.kafka_cluster_id
+    flink_compute_pool           = module.flink.compute_pool_id
+    payments_table               = module.flink_payments.payments_table_name
+    risk_score_table             = module.flink_payments.risk_score_table_name
+    customer_risk_exposure_table = module.flink_payments.customer_risk_exposure_table_name
+    tableflow_topics             = module.tableflow_payments.tableflow_topic_ids
+    databricks_catalog           = databricks_catalog.main.name
+    databricks_schema            = module.databricks.databricks_schema_name
     links = {
       confluent_tableflow = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}/clusters/${module.confluent_platform.kafka_cluster_id}/tableflow"
       confluent_flink     = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}/flink/compute-pools/${module.flink.compute_pool_id}"
@@ -19,7 +20,7 @@ output "demo_status" {
 
 output "workshop_summary" {
   description = "Human-readable workshop summary"
-  value = <<-EOT
+  value       = <<-EOT
     RiverPay demo deployed.
 
     Kafka sources (not Tableflow'd):
@@ -33,6 +34,7 @@ output "workshop_summary" {
     Flink data products → Tableflow:
       - ${local.payments_topic} (append — completed payments, 4-way join + FX TTJ)
       - ${local.risk_score_topic} (upsert — profile TTJ + ${var.enable_risk_udf ? "external risk UDF" : "CASE heuristics (set enable_risk_udf=true after building JAR)"})
+      - ${local.customer_risk_exposure_topic} (upsert — trailing-24h per-customer aggregate)
 
     Risk API: ${var.enable_risk_api ? "http://${module.postgres.public_dns}:8089" : "(disabled)"}
 

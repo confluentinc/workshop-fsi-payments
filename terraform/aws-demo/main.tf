@@ -26,14 +26,15 @@ locals {
 
   iam_role_name = "${local.prefix}-unified-role-${local.resource_suffix}"
 
-  customer_profiles_topic = "riverflow.riverpay.customer_profiles"
-  fx_rates_topic          = "riverflow.riverpay.fx_rates"
-  initiation_topic        = "riverflow.payments.initiation"
-  authorization_topic     = "riverflow.payments.authorization"
-  balance_update_topic    = "riverflow.payments.balance_update"
-  status_topic            = "riverflow.payments.status"
-  payments_topic          = "riverflow_payments"
-  risk_score_topic        = "riverflow_payments_risk_score"
+  customer_profiles_topic      = "riverflow.riverpay.customer_profiles"
+  fx_rates_topic               = "riverflow.riverpay.fx_rates"
+  initiation_topic             = "riverflow.payments.initiation"
+  authorization_topic          = "riverflow.payments.authorization"
+  balance_update_topic         = "riverflow.payments.balance_update"
+  status_topic                 = "riverflow.payments.status"
+  payments_topic               = "riverflow_payments"
+  risk_score_topic             = "riverflow_payments_risk_score"
+  customer_risk_exposure_topic = "riverflow_customer_risk_exposure_24h"
 }
 
 # ===============================
@@ -430,15 +431,16 @@ module "flink_payments" {
   flink_api_secret           = module.flink.flink_api_secret
   flink_rest_endpoint        = module.flink.flink_rest_endpoint
 
-  customer_profiles_topic = local.customer_profiles_topic
-  fx_rates_topic          = local.fx_rates_topic
-  initiation_topic        = local.initiation_topic
-  authorization_topic     = local.authorization_topic
-  balance_update_topic    = local.balance_update_topic
-  status_topic            = local.status_topic
-  payments_table_name     = local.payments_topic
-  risk_score_table_name   = local.risk_score_topic
-  schema_generation       = "avro-v5-risk-udf"
+  customer_profiles_topic           = local.customer_profiles_topic
+  fx_rates_topic                    = local.fx_rates_topic
+  initiation_topic                  = local.initiation_topic
+  authorization_topic               = local.authorization_topic
+  balance_update_topic              = local.balance_update_topic
+  status_topic                      = local.status_topic
+  payments_table_name               = local.payments_topic
+  risk_score_table_name             = local.risk_score_topic
+  customer_risk_exposure_table_name = local.customer_risk_exposure_topic
+  schema_generation                 = "avro-v5-risk-udf"
 
   cloud        = "AWS"
   cloud_region = var.cloud_region
@@ -496,12 +498,13 @@ resource "time_sleep" "wait_for_data" {
 module "tableflow_payments" {
   source = "../modules/confluent-tableflow-payments"
 
-  environment_id          = module.confluent_platform.environment_id
-  kafka_cluster_id        = module.confluent_platform.kafka_cluster_id
-  s3_bucket_name          = module.s3.bucket_name
-  provider_integration_id = module.tableflow.integration_id
-  payments_topic          = local.payments_topic
-  risk_score_topic        = local.risk_score_topic
+  environment_id               = module.confluent_platform.environment_id
+  kafka_cluster_id             = module.confluent_platform.kafka_cluster_id
+  s3_bucket_name               = module.s3.bucket_name
+  provider_integration_id      = module.tableflow.integration_id
+  payments_topic               = local.payments_topic
+  risk_score_topic             = local.risk_score_topic
+  customer_risk_exposure_topic = local.customer_risk_exposure_topic
 
   api_key    = confluent_api_key.tableflow.id
   api_secret = confluent_api_key.tableflow.secret
@@ -521,19 +524,21 @@ module "tableflow_payments" {
 # 30–60+ minutes before the first S3/UC publish.
 resource "null_resource" "wait_for_tableflow" {
   triggers = {
-    payments_topic   = local.payments_topic
-    risk_score_topic = local.risk_score_topic
-    script_hash      = filesha256("${path.module}/scripts/wait_for_tableflow.sh")
+    payments_topic               = local.payments_topic
+    risk_score_topic             = local.risk_score_topic
+    customer_risk_exposure_topic = local.customer_risk_exposure_topic
+    script_hash                  = filesha256("${path.module}/scripts/wait_for_tableflow.sh")
   }
 
   provisioner "local-exec" {
     environment = {
-      TABLEFLOW_API_KEY    = confluent_api_key.tableflow.id
-      TABLEFLOW_API_SECRET = confluent_api_key.tableflow.secret
-      ENVIRONMENT_ID       = module.confluent_platform.environment_id
-      KAFKA_CLUSTER_ID     = module.confluent_platform.kafka_cluster_id
-      PAYMENTS_TOPIC       = local.payments_topic
-      RISK_SCORE_TOPIC     = local.risk_score_topic
+      TABLEFLOW_API_KEY            = confluent_api_key.tableflow.id
+      TABLEFLOW_API_SECRET         = confluent_api_key.tableflow.secret
+      ENVIRONMENT_ID               = module.confluent_platform.environment_id
+      KAFKA_CLUSTER_ID             = module.confluent_platform.kafka_cluster_id
+      PAYMENTS_TOPIC               = local.payments_topic
+      RISK_SCORE_TOPIC             = local.risk_score_topic
+      CUSTOMER_RISK_EXPOSURE_TOPIC = local.customer_risk_exposure_topic
     }
     command = "bash ${path.module}/scripts/wait_for_tableflow.sh"
   }

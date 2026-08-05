@@ -6,7 +6,7 @@
 # Required env:
 #   TABLEFLOW_API_KEY, TABLEFLOW_API_SECRET
 #   ENVIRONMENT_ID, KAFKA_CLUSTER_ID
-#   PAYMENTS_TOPIC, RISK_SCORE_TOPIC
+#   PAYMENTS_TOPIC, RISK_SCORE_TOPIC, CUSTOMER_RISK_EXPOSURE_TOPIC
 #
 # Optional env:
 #   TABLEFLOW_WAIT_ATTEMPTS (default 90)
@@ -19,6 +19,7 @@ set -euo pipefail
 : "${KAFKA_CLUSTER_ID:?}"
 : "${PAYMENTS_TOPIC:?}"
 : "${RISK_SCORE_TOPIC:?}"
+: "${CUSTOMER_RISK_EXPOSURE_TOPIC:?}"
 
 TABLEFLOW_WAIT_ATTEMPTS="${TABLEFLOW_WAIT_ATTEMPTS:-90}"
 TABLEFLOW_WAIT_SECONDS="${TABLEFLOW_WAIT_SECONDS:-60}"
@@ -63,7 +64,7 @@ catalog_ready() {
   [[ "$bad" == "0" ]]
 }
 
-log "Waiting for Tableflow topics RUNNING: ${PAYMENTS_TOPIC}, ${RISK_SCORE_TOPIC}"
+log "Waiting for Tableflow topics RUNNING: ${PAYMENTS_TOPIC}, ${RISK_SCORE_TOPIC}, ${CUSTOMER_RISK_EXPOSURE_TOPIC}"
 log "  (up to $((TABLEFLOW_WAIT_ATTEMPTS * TABLEFLOW_WAIT_SECONDS / 60)) minutes; cold starts can take 30–60+)"
 
 for i in $(seq 1 "$TABLEFLOW_WAIT_ATTEMPTS"); do
@@ -75,8 +76,10 @@ for i in $(seq 1 "$TABLEFLOW_WAIT_ATTEMPTS"); do
 
   payments_phase=$(topic_phase "$topics_json" "$PAYMENTS_TOPIC")
   risk_phase=$(topic_phase "$topics_json" "$RISK_SCORE_TOPIC")
+  customer_risk_exposure_phase=$(topic_phase "$topics_json" "$CUSTOMER_RISK_EXPOSURE_TOPIC")
   payments_err=$(topic_error "$topics_json" "$PAYMENTS_TOPIC")
   risk_err=$(topic_error "$topics_json" "$RISK_SCORE_TOPIC")
+  customer_risk_exposure_err=$(topic_error "$topics_json" "$CUSTOMER_RISK_EXPOSURE_TOPIC")
 
   catalogs_json=$(fetch_catalogs)
   catalog_ok=0
@@ -85,9 +88,9 @@ for i in $(seq 1 "$TABLEFLOW_WAIT_ATTEMPTS"); do
   fi
   catalog_phases=$(echo "$catalogs_json" | jq -r '[.data[]? | .status.phase // "?"] | join(",")' 2>/dev/null || echo "")
 
-  log "  attempt $i/$TABLEFLOW_WAIT_ATTEMPTS: ${PAYMENTS_TOPIC}=${payments_phase:-missing} err=${payments_err:-n/a}; ${RISK_SCORE_TOPIC}=${risk_phase:-missing} err=${risk_err:-n/a}; catalog=[${catalog_phases:-none}]"
+  log "  attempt $i/$TABLEFLOW_WAIT_ATTEMPTS: ${PAYMENTS_TOPIC}=${payments_phase:-missing} err=${payments_err:-n/a}; ${RISK_SCORE_TOPIC}=${risk_phase:-missing} err=${risk_err:-n/a}; ${CUSTOMER_RISK_EXPOSURE_TOPIC}=${customer_risk_exposure_phase:-missing} err=${customer_risk_exposure_err:-n/a}; catalog=[${catalog_phases:-none}]"
 
-  if [[ "$payments_phase" == "RUNNING" && "$risk_phase" == "RUNNING" && "$catalog_ok" -eq 1 ]]; then
+  if [[ "$payments_phase" == "RUNNING" && "$risk_phase" == "RUNNING" && "$customer_risk_exposure_phase" == "RUNNING" && "$catalog_ok" -eq 1 ]]; then
     log "Tableflow materialization RUNNING and catalog integration CONNECTED."
     exit 0
   fi
@@ -102,6 +105,7 @@ for i in $(seq 1 "$TABLEFLOW_WAIT_ATTEMPTS"); do
   }
   fail_if_bad "$PAYMENTS_TOPIC" "$payments_phase" "$payments_err"
   fail_if_bad "$RISK_SCORE_TOPIC" "$risk_phase" "$risk_err"
+  fail_if_bad "$CUSTOMER_RISK_EXPOSURE_TOPIC" "$customer_risk_exposure_phase" "$customer_risk_exposure_err"
 
   sleep "$TABLEFLOW_WAIT_SECONDS"
 done
