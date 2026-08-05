@@ -330,7 +330,7 @@ SELECT * FROM `riverflow_customer_risk_exposure_24h`;
 
 ## Conclusion
 
-You produced the three Flink data products Elevate cares about: FX-aware completed payments, externally scored operational risk, and trailing-24h risk exposure per customer.
+RiverPay's ops team can now answer three questions in real time that used to wait for an end-of-day batch: which payments actually completed and what they're worth in USD, which individual payments need a human to look at them, and which customers are carrying the most exception exposure right now. In LAB 4 you'll publish these to Databricks so Dana can ask those questions in plain language.
 
 ## What's next
 
