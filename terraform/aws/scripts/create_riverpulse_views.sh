@@ -110,7 +110,8 @@ tables_ready() {
     echo "$response" | jq -e \
       --arg p "riverflow_payments" \
       --arg r "riverflow_payments_risk_score" \
-      '[.tables[].name] | index($p) and index($r)' >/dev/null
+      --arg c "riverflow_customer_risk_exposure_24h" \
+      '[.tables[].name] | index($p) and index($r) and index($c)' >/dev/null
     return $?
   fi
 
@@ -133,7 +134,8 @@ tables_ready() {
   echo "$response" | jq -e \
     --arg p "riverflow_payments" \
     --arg r "riverflow_payments_risk_score" \
-    '[.result.data_array[]?[0]] | index($p) and index($r)' >/dev/null
+    --arg c "riverflow_customer_risk_exposure_24h" \
+    '[.result.data_array[]?[0]] | index($p) and index($r) and index($c)' >/dev/null
 }
 
 TOKEN=$(get_token)
@@ -153,7 +155,7 @@ for i in $(seq 1 "$TABLE_WAIT_ATTEMPTS"); do
 done
 
 if [[ "$ready" -ne 1 ]]; then
-  echo "ERROR: Timed out waiting for riverflow_payments + riverflow_payments_risk_score in $DB_CATALOG.$DB_SCHEMA" >&2
+  echo "ERROR: Timed out waiting for riverflow_payments + riverflow_payments_risk_score + riverflow_customer_risk_exposure_24h in $DB_CATALOG.$DB_SCHEMA" >&2
   echo "Check Tableflow catalog sync / S3 materialization in Confluent Cloud, then re-apply." >&2
   exit 1
 fi
@@ -171,12 +173,9 @@ WHERE risk_score >= 0.5"
 run_sql "$TOKEN" "riverpulse_customer_risk_24h" \
 "CREATE OR REPLACE VIEW riverpulse_customer_risk_24h AS
 SELECT customer_id, segment, account_tier,
-       COUNT(*) AS payment_count,
-       AVG(risk_score) AS avg_risk_score,
-       MAX(risk_score) AS max_risk_score
-FROM riverflow_payments_risk_score
-WHERE enrichment_timestamp >= current_timestamp() - INTERVAL 24 HOURS
-GROUP BY customer_id, segment, account_tier"
+       payment_count, avg_risk_score, max_risk_score, updated_at
+FROM riverflow_customer_risk_exposure_24h
+ORDER BY avg_risk_score DESC"
 
 # Phase 1 proxy: risk_score ≈ initiated+enriched; riverflow_payments ≈ completed (4-way join + FX).
 run_sql "$TOKEN" "riverpulse_lifecycle_completion" \

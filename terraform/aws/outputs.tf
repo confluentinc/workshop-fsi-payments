@@ -1,16 +1,17 @@
 output "workshop_status" {
   description = "Self-service deployment status and links"
   value = {
-    environment_id     = module.confluent_platform.environment_id
-    kafka_cluster_id   = module.confluent_platform.kafka_cluster_id
-    flink_compute_pool = module.flink.compute_pool_id
-    payments_table     = local.payments_topic
-    risk_score_table   = local.risk_score_topic
-    flink_mts_created  = var.enable_flink_mts
-    tableflow_enabled  = var.enable_tableflow_topics
-    tableflow_topics   = var.enable_tableflow_topics ? module.tableflow_payments[0].tableflow_topic_ids : null
-    databricks_catalog = databricks_catalog.main.name
-    databricks_schema  = module.databricks.databricks_schema_name
+    environment_id               = module.confluent_platform.environment_id
+    kafka_cluster_id             = module.confluent_platform.kafka_cluster_id
+    flink_compute_pool           = module.flink.compute_pool_id
+    payments_table               = local.payments_topic
+    risk_score_table             = local.risk_score_topic
+    customer_risk_exposure_table = local.customer_risk_exposure_topic
+    flink_mts_created            = var.enable_flink_mts
+    tableflow_enabled            = var.enable_tableflow_topics
+    tableflow_topics             = var.enable_tableflow_topics ? module.tableflow_payments[0].tableflow_topic_ids : null
+    databricks_catalog           = databricks_catalog.main.name
+    databricks_schema            = module.databricks.databricks_schema_name
     links = {
       confluent_tableflow = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}/clusters/${module.confluent_platform.kafka_cluster_id}/tableflow"
       confluent_flink     = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}/flink/compute-pools/${module.flink.compute_pool_id}"
@@ -31,6 +32,8 @@ output "workshop_summary" {
 
     Flink MTs created by Terraform: ${var.enable_flink_mts}
     Tableflow topics enabled by Terraform: ${var.enable_tableflow_topics}
+
+    Flink-native genuine-upsert table (trailing-24h customer risk exposure aggregate): ${local.customer_risk_exposure_topic}
 
     Risk API: ${local.effective_risk_api_endpoint != "" ? local.effective_risk_api_endpoint : "(disabled)"}
     Risk UDF pre-registered: ${var.enable_risk_udf}
