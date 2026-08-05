@@ -556,19 +556,21 @@ module "tableflow_payments" {
 resource "null_resource" "wait_for_tableflow" {
   count = var.enable_tableflow_topics ? 1 : 0
   triggers = {
-    payments_topic   = local.payments_topic
-    risk_score_topic = local.risk_score_topic
-    script_hash      = filesha256("${path.module}/scripts/wait_for_tableflow.sh")
+    payments_topic               = local.payments_topic
+    risk_score_topic             = local.risk_score_topic
+    customer_risk_exposure_topic = local.customer_risk_exposure_topic
+    script_hash                  = filesha256("${path.module}/scripts/wait_for_tableflow.sh")
   }
 
   provisioner "local-exec" {
     environment = {
-      TABLEFLOW_API_KEY    = confluent_api_key.tableflow.id
-      TABLEFLOW_API_SECRET = confluent_api_key.tableflow.secret
-      ENVIRONMENT_ID       = module.confluent_platform.environment_id
-      KAFKA_CLUSTER_ID     = module.confluent_platform.kafka_cluster_id
-      PAYMENTS_TOPIC       = local.payments_topic
-      RISK_SCORE_TOPIC     = local.risk_score_topic
+      TABLEFLOW_API_KEY            = confluent_api_key.tableflow.id
+      TABLEFLOW_API_SECRET         = confluent_api_key.tableflow.secret
+      ENVIRONMENT_ID               = module.confluent_platform.environment_id
+      KAFKA_CLUSTER_ID             = module.confluent_platform.kafka_cluster_id
+      PAYMENTS_TOPIC               = local.payments_topic
+      RISK_SCORE_TOPIC             = local.risk_score_topic
+      CUSTOMER_RISK_EXPOSURE_TOPIC = local.customer_risk_exposure_topic
     }
     command = "bash ${path.module}/scripts/wait_for_tableflow.sh"
   }
