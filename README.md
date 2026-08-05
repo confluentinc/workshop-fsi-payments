@@ -16,7 +16,7 @@
 
 This hands-on workshop demonstrates a **real-time instant-payments operations pipeline** for *RiverPay*, a fictitious mid-size payments processor that sits behind ~40 regional banks and credit unions.
 
-You will ingest customer profiles and FX rates via CDC, stream RiverFlow payment lifecycle events (multi-currency), enrich them with Flink to create three data products — *completed payments* (with FX temporal join), an operational *risk_score* (profile temporal join + external risk UDF), and a trailing-24h *customer risk exposure* aggregate (genuine upsert) — then sync those products via Tableflow into Databricks Genie (*RiverPulse*).
+You will ingest customer profiles and FX rates via CDC, stream RiverFlow payment lifecycle events (multi-currency), enrich them with Flink to create three data products — *completed payments* (with FX temporal join), an operational *risk_score* (profile temporal join + external risk UDF), and a trailing-24h *customer risk exposure* aggregate per customer — then sync those products via Tableflow into Databricks Genie (*RiverPulse*).
 
 ![Architecture diagram](assets/architecture.png)
 
@@ -52,7 +52,7 @@ As instant-payments volume grows, RiverPay's ops team is flying blind between ba
 
 1. **Capture** customer profiles and FX rates from PostgreSQL with CDC
 2. **Stream** payment lifecycle events (initiation → authorization → balance update → status)
-3. **Produce Flink data products** — completed payments (4-way inner join + FX TTJ), operational `risk_score` (profile TTJ + external risk UDF), and trailing-24h customer risk exposure (`OVER` window + primary key = genuine upsert)
+3. **Produce Flink data products** — completed payments (4-way inner join + FX TTJ), operational `risk_score` (profile TTJ + external risk UDF), and trailing-24h customer risk exposure per customer (`OVER` window + primary key = upsert)
 4. **Serve** those products via Tableflow into Unity Catalog (TTL / right-to-forget talking point)
 5. **Analyze** the data with natural language using Databricks *Genie*
 

@@ -8,7 +8,7 @@ Build the three RiverPay Flink data products that Tableflow will publish later:
 
 1. **`riverflow_payments`** — completed payments (4-way inner join + FX temporal join)
 2. **`riverflow_payments_risk_score`** — profile temporal join + external risk UDF
-3. **`riverflow_customer_risk_exposure_24h`** — trailing-24h risk exposure per customer (genuine upsert)
+3. **`riverflow_customer_risk_exposure_24h`** — trailing-24h risk exposure per customer
 
 `risk_score` is **operational exception probability**, not fraud.
 
@@ -210,13 +210,13 @@ SELECT * FROM `riverflow_payments_risk_score` LIMIT 10;
 
 Or open the materialized table in the left pane and use its descriptor / preview.
 
-### Step 5: Customer risk exposure (genuine upsert, trailing 24h)
+### Step 5: Customer risk exposure (trailing 24h)
 
 Reference: [`flink/customer_risk_exposure_24h.sql`](../../../flink/customer_risk_exposure_24h.sql)
 
-`riverflow_payments_risk_score` has one row per payment — a new payment never updates an old row, so its changelog is really append underneath. Here you build a data product that gives each customer's trailing-24-hour risk exposure, and it updates **immediately** on every new payment for that customer — not just when a window closes.
+Step 4 scores each payment individually. But Dana's ops team also needs the customer-level view: *which customers are accumulating the most exception exposure right now?* Here you roll those per-payment scores up into one row per customer, covering their last 24 hours — and it refreshes the moment that customer's next payment is scored.
 
-The trick is an `OVER` window (not `GROUP BY`, not `HOP`/`TUMBLE`): it recomputes per event instead of waiting for a window boundary. Declaring `PRIMARY KEY (customer_id)` on the table is what collapses that per-event output down to one row per customer — Flink upserts by that key instead of appending a new row per payment.
+Two things make that work. An `OVER` window recomputes on every event, rather than waiting for a window to close the way `HOP`/`TUMBLE` would. And declaring `PRIMARY KEY (customer_id)` keeps it to one row per customer, updated in place, instead of adding a new row per payment.
 
 ```sql
 SET 'client.statement-name' = 'riverflow-customer-risk-exposure-24h';
@@ -246,7 +246,7 @@ WITH risk_last_24h AS (
 SELECT * FROM risk_last_24h;
 ```
 
-Confirm it's a genuine upsert table, the same way you confirmed `customer_profiles`/`fx_rates` back in Step 2:
+Confirm the table is keyed and upserting, the same way you confirmed `customer_profiles`/`fx_rates` back in Step 2:
 
 ```sql
 SHOW CREATE TABLE `riverflow_customer_risk_exposure_24h`;
@@ -274,7 +274,7 @@ SELECT * FROM `riverflow_customer_risk_exposure_24h` LIMIT 10;
 
 ## Conclusion
 
-You produced the three Flink data products RiverPay ops cares about: FX-aware completed payments, externally scored operational risk, and a genuine-upsert trailing-24h risk exposure aggregate per customer.
+You produced the three Flink data products RiverPay ops cares about: FX-aware completed payments, externally scored operational risk, and trailing-24h risk exposure per customer.
 
 ## What's next
 
