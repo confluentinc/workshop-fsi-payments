@@ -4,7 +4,7 @@ Use these prompts in Databricks Genie against the Tableflow-published Flink
 data products / `riverpulse_*` views.
 
 **Published tables (Phase 1):** `riverflow_payments` (append, completed only),
-`riverflow_payments_risk_score` (upsert).
+`riverflow_payments_risk_score` (upsert), `riverflow_customer_risk_exposure_24h` (upsert).
 
 ## 1. Highest exception-probability payments
 
@@ -31,6 +31,11 @@ Optional FX-oriented prompt: *Which completed payments have the largest USD-norm
 > before the session, so the 24-hour window usually has real traffic. Short
 > self-service / demo runs still return rows — all workshop data falls inside
 > the window.
+>
+> `riverflow_customer_risk_exposure_24h` only recomputes a customer's row when
+> they have a new payment — a customer who goes quiet keeps their last-computed
+> numbers rather than decaying to zero. If challenged, this is a known,
+> intentional simplification (no background clock forces recomputation).
 
 ## 3. Lifecycle completion rate
 

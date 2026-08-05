@@ -1,7 +1,8 @@
 -- RiverPulse Genie / Databricks SQL views (created by Terraform after Tableflow sync)
 -- Tableflow publishes only Flink data products:
 --   riverflow_payments (append — completed)
---   riverflow_payments_risk_score (upsert)
+--   riverflow_payments_risk_score (upsert — per payment)
+--   riverflow_customer_risk_exposure_24h (upsert — per customer, trailing 24h)
 
 CREATE OR REPLACE VIEW riverpulse_high_risk_payments AS
 SELECT payment_id, customer_id, segment, account_tier, amount, currency,
@@ -12,12 +13,8 @@ ORDER BY risk_score DESC;
 
 CREATE OR REPLACE VIEW riverpulse_customer_risk_24h AS
 SELECT customer_id, segment, account_tier,
-       COUNT(*) AS payment_count,
-       AVG(risk_score) AS avg_risk_score,
-       MAX(risk_score) AS max_risk_score
-FROM riverflow_payments_risk_score
-WHERE enrichment_timestamp >= current_timestamp() - INTERVAL 24 HOURS
-GROUP BY customer_id, segment, account_tier
+       payment_count, avg_risk_score, max_risk_score, updated_at
+FROM riverflow_customer_risk_exposure_24h
 ORDER BY avg_risk_score DESC;
 
 -- Phase 1 completion proxy (stall drill-down is Phase 2 backlog):
