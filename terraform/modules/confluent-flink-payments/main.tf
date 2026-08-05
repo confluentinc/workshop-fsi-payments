@@ -553,3 +553,72 @@ resource "confluent_flink_materialized_table" "payments_risk_score" {
     replace_triggered_by = [terraform_data.schema_generation]
   }
 }
+
+# --- Customer risk exposure: trailing-24h OVER aggregation over riverflow_payments_risk_score ---
+# PRIMARY KEY + upsert changelog.mode collapse the per-event OVER output to one row per customer.
+
+locals {
+  customer_risk_exposure_query = <<-SQL
+    WITH risk_last_24h AS (
+      SELECT
+        customer_id,
+        segment,
+        account_tier,
+        COUNT(*) OVER w AS payment_count,
+        AVG(risk_score) OVER w AS avg_risk_score,
+        MAX(risk_score) OVER w AS max_risk_score,
+        `$rowtime` AS updated_at
+      FROM ${var.risk_score_table_name}
+      WINDOW w AS (
+        PARTITION BY customer_id
+        ORDER BY `$rowtime`
+        RANGE BETWEEN INTERVAL '24' HOUR PRECEDING AND CURRENT ROW
+      )
+    )
+    SELECT * FROM risk_last_24h
+  SQL
+}
+
+resource "confluent_flink_materialized_table" "customer_risk_exposure" {
+  count = var.enable_materialized_tables ? 1 : 0
+
+  organization { id = var.organization_id }
+  environment { id = var.environment_id }
+  compute_pool { id = var.compute_pool_id }
+  principal { id = var.service_account_id }
+
+  display_name = var.customer_risk_exposure_table_name
+  kafka_cluster {
+    id = var.kafka_cluster_id
+  }
+
+  query = local.customer_risk_exposure_query
+
+  constraints {
+    name     = "pk_customer_id"
+    type     = "PRIMARY_KEY"
+    columns  = ["customer_id"]
+    enforced = false
+  }
+
+  table_options = {
+    "changelog.mode"       = "upsert"
+    "kafka.cleanup-policy" = "compact"
+  }
+
+  rest_endpoint = var.flink_rest_endpoint
+
+  credentials {
+    key    = var.flink_api_key
+    secret = var.flink_api_secret
+  }
+
+  depends_on = [
+    confluent_flink_materialized_table.payments_risk_score,
+  ]
+
+  lifecycle {
+    prevent_destroy      = false
+    replace_triggered_by = [terraform_data.schema_generation]
+  }
+}

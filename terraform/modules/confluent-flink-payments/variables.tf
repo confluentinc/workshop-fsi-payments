@@ -48,6 +48,11 @@ variable "risk_score_table_name" {
   type        = string
   default     = "riverflow_payments_risk_score"
 }
+variable "customer_risk_exposure_table_name" {
+  description = "Flink MT name for per-customer trailing-24h risk exposure (genuine upsert, keyed by customer_id)"
+  type        = string
+  default     = "riverflow_customer_risk_exposure_24h"
+}
 
 variable "schema_generation" {
   description = "Bump to recreate Flink statements after wire-format changes (e.g. JSON → Avro)."
