@@ -91,33 +91,6 @@ Full narrative skin: [`USECASE.md`](USECASE.md). Architecture notes: [`context/f
 | Completed payments | Flink MT (inner join + FX TTJ) | `riverflow_payments` | Yes (append) |
 | Risk score | Flink MT (profile TTJ + risk UDF) | `riverflow_payments_risk_score` | Yes (upsert) |
 
-## 🛠️ Technical Stack
-
-### Core Technologies
-
-- **[Terraform](https://terraform.io/)**: Infrastructure as Code for multi-cloud deployment
-- **[Apache Kafka](https://www.confluent.io/apache-kafka/)**: Distributed streaming platform via Confluent Cloud
-- **[Apache Flink](https://www.confluent.io/product/flink/)**: Stream processing (joins, temporal joins, UDF)
-- **[Delta Lake](https://delta.io/)**: Open-source storage framework for data lakes
-
-### Cloud Platforms
-
-- **[Confluent Cloud](https://confluent.io/)**: Fully managed Kafka, Schema Registry, Flink, and Tableflow
-- **[AWS](https://aws.amazon.com/)** / **[Azure](https://azure.microsoft.com/)**: Compute, networking, and object storage (S3 or ADLS Gen2)
-- **[Databricks](https://databricks.com/)**: Unity Catalog and Genie
-
-### Data Generation & Services
-
-- **[ShadowTraffic](https://shadowtraffic.io/)**: Synthetic profiles, FX rates, and payment lifecycle events
-- **PostgreSQL**: System of record for customer profiles and FX rates (CDC source)
-- **Risk Scoring API**: Shared workshop REST API invoked from Flink via CONNECTION + Java UDF
-
-### Tools
-
-- **[Docker](https://docker.com/)**: Containerized Terraform / data-gen workloads
-- **[Git](https://git-scm.com/)**: Version control
-- **[AWS CLI](https://aws.amazon.com/cli/)** / **[Azure CLI](https://learn.microsoft.com/cli/azure/)**: Cloud CLIs (path-dependent)
-
 ## 🔬 Workshop Labs
 
 This workshop supports multiple modes. Choose the path that matches your situation:
