@@ -270,7 +270,7 @@ SELECT * FROM `riverflow_customer_risk_exposure_24h` LIMIT 10;
 
 - [ ] `riverflow_payments` has completed payments with `rate_to_usd` / `amount_usd`
 - [ ] `riverflow_payments_risk_score` has `risk_score` + `risk_reason` from the UDF path
-- [ ] `riverflow_customer_risk_exposure_24h` is confirmed upsert via `SHOW CREATE TABLE`, and updates in place as new payments arrive
+- [ ] `riverflow_customer_risk_exposure_24h` shows one row per customer with their last-24h exposure, and you can name the customers carrying the most risk right now
 
 ## Conclusion
 
