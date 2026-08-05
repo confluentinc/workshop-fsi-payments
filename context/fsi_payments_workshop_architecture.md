@@ -6,7 +6,8 @@ Cloud Terraform products (`terraform/aws-demo/`; Elevate:
 
 **Flink data products (Tableflow sinks):**
 - `riverflow_payments` — 4-way inner join of lifecycle stages + FX temporal join (completed only, append)
-- `riverflow_payments_risk_score` — profile temporal join + external risk UDF (upsert)
+- `riverflow_payments_risk_score` — profile temporal join + external risk UDF (one row per payment)
+- `riverflow_customer_risk_exposure_24h` — trailing-24h `OVER` aggregate per customer, `PRIMARY KEY (customer_id)` (genuine upsert)
 
 Raw lifecycle topics remain Kafka sources only (not Tableflow-enabled in Phase 1).
 Tableflow data TTL supports a right-to-forget talking point. Progressive /

@@ -69,10 +69,11 @@ materialized-table SQL and Tableflow** as attendee lab work.
 | `riverflow.payments.balance_update` | Lifecycle stage 3 (Kafka source) |
 | `riverflow.payments.status` | Lifecycle stage 4 (Kafka source) |
 | `riverflow_payments` | Flink MT — completed payments (4-way inner join, append); includes FX temporal-join enrichment |
-| `riverflow_payments_risk_score` | Flink MT — profile temporal join + external risk UDF (upsert) |
+| `riverflow_payments_risk_score` | Flink MT — profile temporal join + external risk UDF (one row per payment) |
+| `riverflow_customer_risk_exposure_24h` | Flink MT — trailing-24h `OVER` aggregate per customer, `PRIMARY KEY (customer_id)` (genuine upsert) |
 
-Tableflow publishes **only** the two Flink data products (`riverflow_payments` append,
-`riverflow_payments_risk_score` upsert), with **Tableflow data TTL** used for a
+Tableflow publishes **only** the three Flink data products (`riverflow_payments` append,
+`riverflow_payments_risk_score` upsert, `riverflow_customer_risk_exposure_24h` upsert), with **Tableflow data TTL** used for a
 right-to-forget / GDPR talking point. Raw lifecycle and CDC source topics are not
 Tableflow-enabled in Phase 1. Downstream views: `riverpulse_high_risk_payments`,
 `riverpulse_customer_risk_24h`, `riverpulse_lifecycle_completion`.

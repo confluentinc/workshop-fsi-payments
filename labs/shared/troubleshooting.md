@@ -151,7 +151,7 @@ detail: "integration is being used in some confluent resource"
 
 2. Re-run destroy (`terraform destroy` or `wsa clean`).
 
-3. If it still sticks, disable Tableflow on `riverflow_payments` / `riverflow_payments_risk_score` in the Confluent UI, then destroy again.
+3. If it still sticks, disable Tableflow on `riverflow_payments` / `riverflow_payments_risk_score` / `riverflow_customer_risk_exposure_24h` in the Confluent UI, then destroy again.
 
 Azure instructor-led WSA sets `cleanup.disable_tableflow: true` in [`wsa-spec-azure.yaml`](../../wsa-spec-azure.yaml).
 

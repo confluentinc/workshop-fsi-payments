@@ -11,7 +11,7 @@ Publish the Flink data products to Databricks Unity Catalog with Tableflow (Delt
 ### What you'll accomplish
 
 1. Create the Unity Catalog integration for Tableflow
-2. Enable Tableflow on `riverflow_payments` (append) and `riverflow_payments_risk_score` (upsert)
+2. Enable Tableflow on `riverflow_payments` (append), `riverflow_payments_risk_score` (upsert), and `riverflow_customer_risk_exposure_24h` (upsert)
 3. Verify Delta tables in Databricks
 
 ### Prerequisites
@@ -68,13 +68,14 @@ Enable Tableflow for:
 |---------------|------|
 | `riverflow_payments` | append |
 | `riverflow_payments_risk_score` | upsert |
+| `riverflow_customer_risk_exposure_24h` | upsert |
 
 > [!WARNING]
 > Do **not** Tableflow-enable raw lifecycle CDC topics in this workshop.
 
 #### 🧩 Enable Tableflow Challenge
 
-In the **[Topic UI](https://confluent.cloud/go/topics)**, find where to enable Tableflow on one of the two topics above, choose **Delta** as the table format, and point it at your catalog integration. Repeat for the second topic.
+In the **[Topic UI](https://confluent.cloud/go/topics)**, find where to enable Tableflow on one of the three topics above, choose **Delta** as the table format, and point it at your catalog integration. Repeat for the other two topics.
 
 <img src="./assets/lab4_step2_1.png" alt="Enable Tableflow modal with Iceberg/Delta format choice and storage configuration options" width="400">
 
@@ -106,7 +107,7 @@ SELECT * FROM <catalog>.<schema>.riverflow_payments_risk_score LIMIT 10;
 #### Checkpoint
 
 - [ ] Catalog integration created and healthy
-- [ ] Both real-time data products enabled for Tableflow
+- [ ] All three real-time data products enabled for Tableflow
 - [ ] Data TTL configured (≥ 30 days) on both topics
 - [ ] Rows visible in Databricks
 - [ ] You can explain data TTL vs snapshot retention for payments ops

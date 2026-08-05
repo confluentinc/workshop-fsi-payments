@@ -11,7 +11,8 @@
 * Security: light PII in the profile + brief CSFLE talking point; Tableflow **data TTL** for right-to-forget.
 * Flink data products:
   * `riverflow_payments` — 4-way inner join (completed only) + FX rates temporal join → Tableflow **append**
-  * `riverflow_payments_risk_score` — profile temporal join + external risk UDF → Tableflow **upsert**
+  * `riverflow_payments_risk_score` — profile temporal join + external risk UDF → Tableflow
+  * `riverflow_customer_risk_exposure_24h` — trailing-24h `OVER` aggregate per customer → Tableflow **upsert**
 * Progressive / stall-aware payment state: **Phase 2 backlog** (progressive upsert deferred).
 * Topics: lifecycle-specific Kafka sources; profile + **FX rates** CDC; multi-currency (USD + GBP, AUD, CAD, JPY, EUR).
 * Delivery:

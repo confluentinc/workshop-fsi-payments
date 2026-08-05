@@ -95,8 +95,8 @@ Event sequence:
 * **External risk service:** Shared Risk Scoring REST API on Azure Container Apps
   (one public HTTPS workshop URL); Flink `CONNECTION` + Java UDF pre-registered
   per environment.
-* **Processing:** Flink produces two data products — `riverflow_payments` (4-way inner join + FX temporal join enrichment; completed payments) and `riverflow_payments_risk_score` (profile temporal join + risk UDF).
-* **Serving/sink:** Tableflow on `riverflow_payments` (append) and `riverflow_payments_risk_score` (upsert) only, with Tableflow data TTL for right-to-forget.
+* **Processing:** Flink produces three data products — `riverflow_payments` (4-way inner join + FX temporal join enrichment; completed payments), `riverflow_payments_risk_score` (profile temporal join + risk UDF), and `riverflow_customer_risk_exposure_24h` (trailing-24h `OVER` aggregate per customer, genuine upsert).
+* **Serving/sink:** Tableflow on `riverflow_payments` (append), `riverflow_payments_risk_score` (upsert), and `riverflow_customer_risk_exposure_24h` (upsert) only, with Tableflow data TTL for right-to-forget.
 * **Consumption:** Databricks/Genie (RiverPulse) answering the business questions above. Completion rate uses a Phase 1 proxy (completed with FX enrichment / initiated_enriched); stall drill-down is Phase 2. Customer exposure window is 24 hours.
 
 ### Optional components

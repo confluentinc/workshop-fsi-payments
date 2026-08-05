@@ -55,7 +55,7 @@ Hands-on path for attendees: `labs/demo/` (LAB0–LAB4) for demo mode, or
 
 **You do:** Walk the four-layer story: source → stream → process → serve.
 
-**You say:** "Customer profiles and FX rates live in Postgres and flow in via CDC. Payment events stream into Kafka across initiation, authorization, balance update, and status. Flink builds two data products: completed payments via a four-way inner join plus an FX temporal join for USD-normalized amounts, and an operational `risk_score` via a profile temporal join plus an external risk UDF — exception probability, not fraud. Tableflow publishes those two products to Unity Catalog (with a right-to-forget / TTL talking point) so Genie can answer questions live."
+**You say:** "Customer profiles and FX rates live in Postgres and flow in via CDC. Payment events stream into Kafka across initiation, authorization, balance update, and status. Flink builds three data products: completed payments via a four-way inner join plus an FX temporal join for USD-normalized amounts, an operational `risk_score` via a profile temporal join plus an external risk UDF — exception probability, not fraud — and a trailing-24h customer risk exposure aggregate that upserts one row per customer. Tableflow publishes those three products to Unity Catalog (with a right-to-forget / TTL talking point) so Genie can answer questions live."
 
 **You say (profile vs payment):** "`segment` and `account_tier` live on the customer profile, not on the payment. The payment carries amount and currency; we temporal-join the profile at initiation time to feed those attributes into the risk UDF — that's the enrichment pattern, not denormalizing segment onto every payment event."
 
@@ -102,6 +102,6 @@ Hands-on path for attendees: `labs/demo/` (LAB0–LAB4) for demo mode, or
 * First `lookup_operational_risk` smoke test slow → normal cold path (~1 min); past ~2 min → CONNECTION / Risk API
 * Smoke/`risk_reason` shows `risk_api_error` / `risk_api_http_*` → soft-fail from UDF (timeout, bad token, API down); not a real score — smoke the shared Risk API
 * Empty `amount_usd` / FX join misses → confirm `riverflow.riverpay.fx_rates` CDC + watermarks
-* "Is risk an upsert?" → clarify: *profiles* (and FX) are upsert CDC sources for TTJ; initiation is append; Phase 1 risk MT is one enrichment per initiation (often append changelog). Diagram "upsert" means Tableflow framing of current risk per `payment_id` — verify with `SHOW CREATE TABLE` if challenged
+* "Is risk an upsert?" → `riverflow_payments_risk_score` is honestly one row per payment (append changelog underneath). The genuine upsert product is `riverflow_customer_risk_exposure_24h` — a trailing-24h aggregate per customer, keyed by `customer_id` (`OVER` window + declared `PRIMARY KEY`), which upserts in place on every new payment. Verify either with `SHOW CREATE TABLE` if challenged
 * Genie empty → wait for Tableflow sync; fall back to SQL views
 * Destroy/apply issues → LAB4 (demo) or operator azure teardown + shared troubleshooting

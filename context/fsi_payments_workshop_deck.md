@@ -46,7 +46,8 @@
 
 # Slide 7: Flink Data Products
 - `riverflow_payments` — 4-way inner join + FX TTJ → `rate_to_usd` / `amount_usd` (append)
-- `riverflow_payments_risk_score` — profile temporal join + **lookup_operational_risk** UDF (upsert)
+- `riverflow_payments_risk_score` — profile temporal join + **lookup_operational_risk** UDF (one row per payment)
+- `riverflow_customer_risk_exposure_24h` — trailing-24h `OVER` aggregate per customer (genuine upsert)
 - risk_score = operational exception probability (not fraud), with human-readable `risk_reason`
 - Shared Risk Scoring API: one workshop HTTPS URL; CONNECTION + UDF pre-registered
 - Stall / in-flight stage drill-down deferred to Phase 2
@@ -54,7 +55,7 @@
 ---
 
 # Slide 8: Tableflow — No Lakehouse Pipeline to Maintain
-- Tableflow publishes the two Flink data products (not raw lifecycle topics)
+- Tableflow publishes the three Flink data products (not raw lifecycle topics)
 - Delta Lake + Unity Catalog without custom ETL
 - **Data TTL** on Tableflow topics — right-to-forget / retention talking point
 - Marcus (data platform) gets governed tables; Dana (ops) gets Genie answers

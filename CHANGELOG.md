@@ -1,5 +1,21 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+
+- Third Flink data product `riverflow_customer_risk_exposure_24h`: trailing-24h risk exposure per customer, built with a CTE + `OVER` window over `riverflow_payments_risk_score` and a declared `PRIMARY KEY (customer_id)` — a **genuine upsert** table (one row per customer, updated in place on every new payment), unlike the per-payment `riverflow_payments_risk_score`. Reference SQL: `flink/customer_risk_exposure_24h.sql`; new LAB3 Step 5 in instructor-led and self-service.
+- Tableflow publishes the new table as a third data product (`terraform/modules/confluent-tableflow-payments`), wired through the `terraform/aws` and `terraform/aws-demo` roots including their Tableflow readiness gates.
+
+### Changed
+
+- `riverpulse_customer_risk_24h` Databricks view (name unchanged) now passes through the Flink-native `riverflow_customer_risk_exposure_24h` table instead of aggregating `riverflow_payments_risk_score` on the Databricks side.
+- Bumped the pinned `confluentinc/confluent` provider to `2.81.0` in `terraform/aws-demo` and `terraform/azure` — `table_options` on `confluent_flink_materialized_table` requires >= 2.80.0.
+
+### Known limitations
+
+- `riverflow_customer_risk_exposure_24h` only recomputes a customer's row when that customer has a **new** payment. A customer who goes quiet keeps their last-computed trailing-24h numbers rather than decaying toward zero — there is no background clock forcing recomputation. Documented in LAB3 Step 5, LAB5, and `sql/genie_prompts.md`.
+
 ## [v0.2.0] — 2026-07-28
 
 Detailed author notes: [`context/elevate_2026_internal_changelog.md`](context/elevate_2026_internal_changelog.md).

@@ -272,6 +272,8 @@ Reference: [`flink/customer_risk_exposure_24h.sql`](../../../flink/customer_risk
 
 The trick is an `OVER` window (not `GROUP BY`, not `HOP`/`TUMBLE`): it recomputes per event instead of waiting for a window boundary. Declaring `PRIMARY KEY (customer_id)` on the table is what collapses that per-event output down to one row per customer — Flink upserts by that key instead of appending a new row per payment.
 
+<img src="./assets/lab3_step5_1.png" alt="Pipeline diagram highlighting Payments Risk Score feeding the Customer Risk Score upsert table" width="800">
+
 ```sql
 SET 'client.statement-name' = 'riverflow-customer-risk-exposure-24h';
 CREATE OR ALTER MATERIALIZED TABLE `riverflow_customer_risk_exposure_24h` (

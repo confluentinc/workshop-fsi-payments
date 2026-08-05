@@ -11,7 +11,7 @@ A single `terraform apply` provisions the RiverPay pipeline: AWS + Postgres + Sh
 | Layer | Resources |
 |-------|-----------|
 | **AWS** | VPC, EC2 (PostgreSQL + ShadowTraffic + Risk API `:8089`), S3, IAM |
-| **Confluent Cloud** | Environment, Standard Kafka cluster, Schema Registry, Flink compute pool, Postgres CDC (`customer_profiles` + `fx_rates`), lifecycle topics, Flink MTs (`riverflow_payments`, `riverflow_payments_risk_score`), risk UDF artifact/CONNECTION (default on), Tableflow on those two products + UC catalog integration |
+| **Confluent Cloud** | Environment, Standard Kafka cluster, Schema Registry, Flink compute pool, Postgres CDC (`customer_profiles` + `fx_rates`), lifecycle topics, Flink MTs (`riverflow_payments`, `riverflow_payments_risk_score`, `riverflow_customer_risk_exposure_24h`), risk UDF artifact/CONNECTION (default on), Tableflow on those three products + UC catalog integration |
 | **Databricks** | Storage credential, external location, catalog, RiverPulse SQL views |
 
 ### Prerequisites
@@ -67,6 +67,7 @@ demo_status = {
   flink_compute_pool = "lfcp-xxxxx"
   payments_table     = "riverflow_payments"
   risk_score_table   = "riverflow_payments_risk_score"
+  customer_risk_exposure_table = "riverflow_customer_risk_exposure_24h"
   databricks_catalog = "neo-abcd1234"
   databricks_schema  = "lkc-xxxxx"
   links = {
@@ -92,6 +93,7 @@ demo_status = {
 5. Open Flink data products:
    - `riverflow_payments` — completed payments (4-way inner join + FX TTJ → `amount_usd`)
    - `riverflow_payments_risk_score` — `risk_score` / `risk_reason` from external UDF
+   - `riverflow_customer_risk_exposure_24h` — trailing-24h per-customer aggregate (`payment_count`, `avg_risk_score`, `max_risk_score`), updates immediately on each new payment
 6. Confirm Tableflow is enabled on those **two** products (not the raw lifecycle topics)
 7. Optional — `terraform output risk_api_url` and curl `/health` on the demo Risk API
 
@@ -105,7 +107,7 @@ demo_status = {
 1. Open your Databricks workspace (or the link from `demo_status.links.databricks`)
 2. Navigate to catalog `demo_status.databricks_catalog` → schema `demo_status.databricks_schema`
 3. Confirm Delta tables from Tableflow and views (sync can take several extra minutes after apply):
-   - `riverflow_payments` / `riverflow_payments_risk_score`
+   - `riverflow_payments` / `riverflow_payments_risk_score` / `riverflow_customer_risk_exposure_24h`
    - `riverpulse_high_risk_payments`
    - `riverpulse_customer_risk_24h`
    - `riverpulse_lifecycle_completion`

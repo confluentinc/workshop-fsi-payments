@@ -41,6 +41,9 @@ Use the prompts from [`sql/genie_prompts.md`](../../../sql/genie_prompts.md):
 > Phase 1.
 >
 > Remember: `risk_score` is operational exception probability, **not** fraud.
+>
+> For (2), a customer's row only updates when they have a new payment — a quiet
+> customer's numbers won't decay to zero, they'll just stay at their last-computed value.
 
 **Worked example (Q1)** — Genie (or SQL) should surface rows like:
 

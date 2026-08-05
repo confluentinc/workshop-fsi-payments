@@ -6,8 +6,9 @@
 2. **Stream** — RiverFlow lifecycle topics (initiation → authorization → balance update → status), multi-currency
 3. **Flink data products**
    - `riverflow_payments` — completed payments (4-way inner join + FX temporal join, append)
-   - `riverflow_payments_risk_score` — operational risk (profile temporal join + external risk UDF, upsert)
-4. **Serve** — Tableflow those two products into Unity Catalog
+   - `riverflow_payments_risk_score` — operational risk (profile temporal join + external risk UDF)
+   - `riverflow_customer_risk_exposure_24h` — trailing-24h risk exposure per customer (genuine upsert, keyed by `customer_id`)
+4. **Serve** — Tableflow those three products into Unity Catalog
 5. **Act** — RiverPulse / Genie answers to three ops questions
 
 ## Talking points

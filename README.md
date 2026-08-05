@@ -16,7 +16,7 @@
 
 This hands-on workshop demonstrates a **real-time instant-payments operations pipeline** for *RiverPay*, a fictitious mid-size payments processor that sits behind ~40 regional banks and credit unions.
 
-You will ingest customer profiles and FX rates via CDC, stream RiverFlow payment lifecycle events (multi-currency), enrich them with Flink to create two data products — *completed payments* (with FX temporal join) and an operational *risk_score* (profile temporal join + external risk UDF) — then sync those products via Tableflow into Databricks Genie (*RiverPulse*).
+You will ingest customer profiles and FX rates via CDC, stream RiverFlow payment lifecycle events (multi-currency), enrich them with Flink to create three data products — *completed payments* (with FX temporal join), an operational *risk_score* (profile temporal join + external risk UDF), and a trailing-24h *customer risk exposure* aggregate (genuine upsert) — then sync those products via Tableflow into Databricks Genie (*RiverPulse*).
 
 ![Architecture diagram](assets/architecture.png)
 
@@ -52,11 +52,11 @@ As instant-payments volume grows, RiverPay's ops team is flying blind between ba
 
 1. **Capture** customer profiles and FX rates from PostgreSQL with CDC
 2. **Stream** payment lifecycle events (initiation → authorization → balance update → status)
-3. **Produce Flink data products** — completed payments (4-way inner join + FX TTJ) + operational `risk_score` (profile TTJ + external risk UDF)
+3. **Produce Flink data products** — completed payments (4-way inner join + FX TTJ), operational `risk_score` (profile TTJ + external risk UDF), and trailing-24h customer risk exposure (`OVER` window + primary key = genuine upsert)
 4. **Serve** those products via Tableflow into Unity Catalog (TTL / right-to-forget talking point)
 5. **Analyze** the data with natural language using Databricks *Genie*
 
-**Tableflow publishes only the two Flink data products** (`riverflow_payments` append, `riverflow_payments_risk_score` upsert). Raw lifecycle topics stay Kafka sources.
+**Tableflow publishes only the three Flink data products** (`riverflow_payments` append, `riverflow_payments_risk_score` upsert, `riverflow_customer_risk_exposure_24h` upsert). Raw lifecycle topics stay Kafka sources.
 
 ### 🎓 Key Learning Outcomes
 
@@ -70,7 +70,7 @@ As instant-payments volume grows, RiverPay's ops team is flying blind between ba
 
 1. **Data Sources** — ShadowTraffic (profiles, FX, lifecycle) + PostgreSQL + shared Risk Scoring API
 2. **Ingestion** — Postgres CDC connector + Kafka producers for lifecycle topics
-3. **Processing** — Apache Flink SQL (completed-payments MT + risk-score MT)
+3. **Processing** — Apache Flink SQL (completed-payments MT + risk-score MT + customer risk exposure MT)
 4. **Integration** — Confluent Tableflow → Delta Lake (S3 or ADLS Gen2)
 5. **Analytics** — Databricks Unity Catalog + Genie (RiverPulse)
 
@@ -90,6 +90,7 @@ Full narrative skin: [`USECASE.md`](USECASE.md). Architecture notes: [`context/f
 | Status | ShadowTraffic → Kafka | `riverflow.payments.status` | No |
 | Completed payments | Flink MT (inner join + FX TTJ) | `riverflow_payments` | Yes (append) |
 | Risk score | Flink MT (profile TTJ + risk UDF) | `riverflow_payments_risk_score` | Yes (upsert) |
+| Customer risk exposure | Flink MT (trailing-24h OVER aggregate) | `riverflow_customer_risk_exposure_24h` | Yes (upsert) |
 
 ## 🔬 Workshop Labs
 
@@ -113,7 +114,7 @@ This workshop supports multiple modes. Choose the path that matches your situati
 | [LAB 1: Claim Your Account](./labs/instructor-led/LAB1_claim_account/LAB1.md) | ~5 min | **Claim your workshop account**: complete the claim form, receive credentials, verify Confluent Cloud and Databricks. |
 | [LAB 2: Explore Your Environment](./labs/instructor-led/LAB2_explore_environment/LAB2.md) | ~10 min | **Tour your environment**: CDC topics, lifecycle topics, Flink compute pool, risk CONNECTION/UDF. |
 | [LAB 3: Stream Processing](./labs/instructor-led/LAB3_stream_processing/LAB3.md) | ~20 min | **Transform streams**: Flink MTs — completed payments (FX temporal join) + operational risk (profile TTJ + UDF). |
-| [LAB 4: Tableflow](./labs/instructor-led/LAB4_tableflow/LAB4.md) | ~10 min | **Enable Tableflow**: publish the two Flink data products; TTL / right-to-forget talking point. |
+| [LAB 4: Tableflow](./labs/instructor-led/LAB4_tableflow/LAB4.md) | ~10 min | **Enable Tableflow**: publish the three Flink data products; TTL / right-to-forget talking point. |
 | [LAB 5: RiverPulse Analytics](./labs/instructor-led/LAB5_riverpulse_analytics/LAB5.md) | ~15 min | **Ask Genie**: answer the three RiverPulse business questions. |
 | [LAB 6: Wrap Up](./labs/instructor-led/LAB6_wrap_up/LAB6.md) | ~5 min | **Recap**: review accomplishments and next steps. |
 
