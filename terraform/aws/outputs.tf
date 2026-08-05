@@ -63,13 +63,14 @@ output "ssh_key_path" {
 output "demo_status" {
   description = "Alias of workshop_status for scripts that expect demo_status"
   value = {
-    environment_id     = module.confluent_platform.environment_id
-    kafka_cluster_id   = module.confluent_platform.kafka_cluster_id
-    flink_compute_pool = module.flink.compute_pool_id
-    payments_table     = local.payments_topic
-    risk_score_table   = local.risk_score_topic
-    databricks_catalog = databricks_catalog.main.name
-    databricks_schema  = module.databricks.databricks_schema_name
+    environment_id               = module.confluent_platform.environment_id
+    kafka_cluster_id             = module.confluent_platform.kafka_cluster_id
+    flink_compute_pool           = module.flink.compute_pool_id
+    payments_table               = local.payments_topic
+    risk_score_table             = local.risk_score_topic
+    customer_risk_exposure_table = local.customer_risk_exposure_topic
+    databricks_catalog           = databricks_catalog.main.name
+    databricks_schema            = module.databricks.databricks_schema_name
     links = {
       confluent_tableflow = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}/clusters/${module.confluent_platform.kafka_cluster_id}/tableflow"
       confluent_flink     = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}/flink/compute-pools/${module.flink.compute_pool_id}"
