@@ -14,7 +14,7 @@ Publish the Flink data products to Databricks Unity Catalog with Tableflow (Delt
 
 ### Prerequisites
 
-Completed **[LAB 3](../LAB3_stream_processing/LAB3.md)** with both MTs populated.
+Completed **[LAB 3](../LAB3_stream_processing/LAB3.md)** with all three materialized tables populated.
 
 ## Steps
 
@@ -46,12 +46,13 @@ In SQL editor (replace catalog/schema):
 SHOW TABLES IN <catalog>.<schema>;
 SELECT * FROM <catalog>.<schema>.riverflow_payments LIMIT 10;
 SELECT * FROM <catalog>.<schema>.riverflow_payments_risk_score LIMIT 10;
+SELECT * FROM <catalog>.<schema>.riverflow_customer_risk_exposure_24h LIMIT 10;
 ```
 
 #### Checkpoint
 
-- [ ] Both Flink products enabled for Tableflow
-- [ ] Rows visible in Databricks
+- [ ] All three Flink products enabled for Tableflow
+- [ ] Rows visible in Databricks for all three tables
 
 ## Conclusion
 

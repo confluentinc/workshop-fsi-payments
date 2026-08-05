@@ -16,7 +16,7 @@ Publish the Flink data products to Databricks Unity Catalog with Tableflow (Delt
 
 ### Prerequisites
 
-Completed **[LAB 3](../LAB3_stream_processing/LAB3.md)** with both MTs populated.
+Completed **[LAB 3](../LAB3_stream_processing/LAB3.md)** with all three materialized tables populated.
 
 ## Steps
 
@@ -92,25 +92,52 @@ Both are in the email you received.
 </details>
 
 > [!TIP]
-> Tableflow will start syncing in a few minutes, and the tables will appear in your Databricks catalog.
+> Don't wait for Tableflow to finish enabling — move on to the next topic while it spins up. Syncing starts within a few minutes, and the tables then appear in your Databricks catalog.
 
 ### Step 3: Verify in Databricks
 
-In SQL editor (replace catalog/schema):
+This is your first time in Databricks — everything you need is in the credentials email from LAB 1.
+
+1. Open the **Databricks workspace URL** from the email, choose **Continue with Microsoft Entra ID**, and sign in with the Databricks email and password from that same email.
+
+   <img src="./assets/lab4_step3_1.png" alt="Databricks log in page with the Continue with Microsoft Entra ID button" width="400">
+
+> [!NOTE]
+> If you see a transient **403**, refresh the page.
+
+2. Confirm you land on the workspace home, then open **SQL Editor** from the left nav.
+
+   <img src="./assets/lab4_step3_2.png" alt="Databricks left navigation with SQL Editor under the SQL section" width="400">
+
+3. Under **Create new**, click **SQL Query**, then pick your **SQL warehouse** (its ID is in the email).
+
+   <img src="./assets/lab4_step3_3.png" alt="SQL Editor landing page with the Create new SQL Query tile" width="500">
+
+4. Run the queries below, replacing `<catalog>` with your **Unity Catalog name** and `<schema>` with your **schema name** — both are in the email too.
 
 ```sql
-SHOW TABLES IN <catalog>.<schema>;
-SELECT * FROM <catalog>.<schema>.riverflow_payments LIMIT 10;
-SELECT * FROM <catalog>.<schema>.riverflow_payments_risk_score LIMIT 10;
+SHOW TABLES IN `<catalog>`.`<schema>`;
 ```
+```sql
+SELECT * FROM `<catalog>`.`<schema>`.`riverflow_payments` LIMIT 10;
+```
+```sql
+SELECT * FROM `<catalog>`.`<schema>`.`riverflow_payments_risk_score` LIMIT 10;
+```
+```sql
+SELECT * FROM `<catalog>`.`<schema>`.`riverflow_customer_risk_exposure_24h` LIMIT 10;
+```
+
+<img src="./assets/lab4_step3_4.png" alt="Databricks SQL Editor showing riverflow_customer_risk_exposure_24h rows with customer_id, segment, account_tier, payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
+
+> [!TIP]
+> Same rows you built in Flink, now queryable in Databricks — no pipeline, no copy job. Tableflow published the Kafka topic straight into Unity Catalog as a Delta table.
 
 #### Checkpoint
 
 - [ ] Catalog integration created and healthy
 - [ ] All three real-time data products enabled for Tableflow
-- [ ] Data TTL configured (≥ 30 days) on both topics
-- [ ] Rows visible in Databricks
-- [ ] You can explain data TTL vs snapshot retention for payments ops
+- [ ] Rows visible in Databricks for all three tables
 
 ## Conclusion
 
