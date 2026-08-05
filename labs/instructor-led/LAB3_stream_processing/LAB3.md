@@ -142,6 +142,19 @@ A payment arrives as four separate events, one per topic — `initiation` (start
 
 Two blanks are left in the `JOIN` line below. Fill in the **FX rates table** to join against (Step 1 showed its rows) and the **watermark column** to join as-of (Step 2 confirmed it on every source table).
 
+<details>
+<summary>Hint — how to find the watermark column</summary>
+
+Run `SHOW CREATE TABLE` on any source table and look for its `WATERMARK FOR ...` line:
+
+```sql
+SHOW CREATE TABLE `riverflow.riverpay.fx_rates`;
+```
+
+The column named in that clause is the one to join as-of.
+
+</details>
+
 ```sql
 SET 'client.statement-name' = 'riverflow-payments-completed';
 CREATE OR ALTER MATERIALIZED TABLE `riverflow_payments` AS
