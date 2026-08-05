@@ -317,6 +317,10 @@ SELECT * FROM `riverflow_customer_risk_exposure_24h`;
 > [!NOTE]
 > Results may take up to a minute to appear the first time.
 
+<img src="./assets/lab3_step5_2.png" alt="Query result showing one row per customer with payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
+
+You should see **100 rows — one per customer**, not one per payment, even though `payment_count` shows each customer has 75–110 payments behind their row. That collapse is the `PRIMARY KEY` doing its job. Sort by `avg_risk_score` to see who your ops team should be looking at first.
+
 #### Checkpoint
 
 - [ ] `riverflow_payments` has completed payments with `rate_to_usd` / `amount_usd`
