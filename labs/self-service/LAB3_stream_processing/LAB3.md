@@ -31,10 +31,10 @@ SELECT * FROM `riverflow.payments.initiation` LIMIT 5;
 
 ### Step 2: Confirm changelog modes / watermarks
 
-Terraform pre-applies changelog.mode and watermarks on CDC and lifecycle source tables. Spot-check one of each:
+The joins you write in Step 3 only work if the source tables are set up correctly — reference data (profiles, FX rates) has to be keyed and updatable, payment events have to stay as a plain stream, and every table needs a timestamp Flink can order by. Your `terraform apply` already did this. Check one of each so you know what you're building on:
 
 ```sql
-SHOW CREATE TABLE `riverflow.riverpay.customer_profiles`;
+SHOW CREATE TABLE `riverflow.riverpay.fx_rates`;
 SHOW CREATE TABLE `riverflow.payments.initiation`;
 ```
 
@@ -214,9 +214,12 @@ Or open the materialized table in the left pane and use its descriptor / preview
 
 Reference: [`flink/customer_risk_exposure_24h.sql`](../../../flink/customer_risk_exposure_24h.sql)
 
-Step 4 scores each payment individually. But Dana's ops team also needs the customer-level view: *which customers are accumulating the most exception exposure right now?* Here you roll those per-payment scores up into one row per customer, covering their last 24 hours — and it refreshes the moment that customer's next payment is scored.
+Step 4 scores each payment on its own. Dana's ops team also needs the customer-level view: *which customers are accumulating the most exception exposure right now?*
 
-Two things make that work. An `OVER` window recomputes on every event, rather than waiting for a window to close the way `HOP`/`TUMBLE` would. And declaring `PRIMARY KEY (customer_id)` keeps it to one row per customer, updated in place, instead of adding a new row per payment.
+This step rolls those per-payment scores up into a single row per customer, covering their last 24 hours. Each row refreshes the moment that customer's next payment is scored. Two things make that work:
+
+- An `OVER` window recomputes on every event, instead of waiting for a window to close the way `HOP` and `TUMBLE` do.
+- `PRIMARY KEY (customer_id)` keeps one row per customer, updated in place (upsert) rather than appending a new row per payment.
 
 ```sql
 SET 'client.statement-name' = 'riverflow-customer-risk-exposure-24h';

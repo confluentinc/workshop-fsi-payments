@@ -7,10 +7,9 @@
 ### What you'll accomplish
 
 1. **`riverflow_payments`** — completed payments (4-way inner join + FX temporal join)
-2. **`riverflow_payments_risk_score`** — profile temporal join + external risk UDF
+2. **`riverflow_payments_risk_score`** — profile temporal join + external risk UDF. `risk_score` is **operational exception probability**, not fraud.
 3. Aggregate `riverflow_payments_risk_score` into `riverflow_customer_risk_exposure_24h` — trailing-24h risk exposure per customer
 
-`risk_score` is **operational exception probability**, not fraud.
 
 <img src="./assets/lab3.png" alt="RiverPay pipeline architecture: sources through Flink to Tableflow and Databricks" width="800">
 
@@ -54,7 +53,7 @@ SELECT * FROM `riverflow.payments.initiation` LIMIT 5;
 
 ### Step 2: Confirm changelog modes / watermarks
 
-Terraform pre-applies changelog.mode and watermarks on CDC and lifecycle source tables (Azure and AWS). Spot-check one of each:
+The joins you write in Step 3 only work if the source tables are set up correctly — reference data (profiles, FX rates) has to be keyed and updatable, payment events have to stay as a plain stream, and every table needs a timestamp Flink can order by. That's already done for you. Check one of each so you know what you're building on:
 
 ```sql
 SHOW CREATE TABLE `riverflow.riverpay.customer_profiles`;
@@ -63,7 +62,7 @@ SHOW CREATE TABLE `riverflow.riverpay.customer_profiles`;
 <img src="./assets/lab3_step2_1.png" alt="SHOW CREATE TABLE result highlighting changelog.mode upsert and kafka.cleanup-policy compact" width="550">
 
 ```sql
-SHOW CREATE TABLE `riverflow.payments.initiation`;
+SHOW CREATE TABLE `riverflow.riverpay.fx_rates`;
 ```
 
 **Expected result:** upsert + compact on profiles/FX; append on lifecycle topics; `$rowtime` watermarks present.
@@ -180,13 +179,13 @@ FROM `riverflow.payments.initiation` i
 <details>
 <summary>Hint</summary>
 
-Run `SHOW CREATE TABLE` on any source table and look for its `WATERMARK FOR ...` line:
+Run `DESCRIBE EXTENDED <FX_RATES_TABLE>`  and look for the Watermark.
 
 
 </details>
 
 > [!NOTE]
-> **Why a materialized table?** A materialized table is a single object that owns both the schema and the query logic that keeps filling it — Flink creates a backing Kafka topic, registers the schema, and runs the query continuously, so new payments land in the table as they happen. That is also what makes it available to Tableflow and Databricks in LAB 4–5.
+> **Why a materialized table?** A materialized table is a single object that owns both the schema and the query logic that keeps filling it — Flink creates a backing Kafka topic, registers the schema, and runs the query continuously, so new payments land in the table as they happen.
 >
 > Because schema and query live together, you can **evolve** them in place: `CREATE OR ALTER MATERIALIZED TABLE` lets you change the query or add a column and Flink migrates the table for you, instead of dropping the table, recreating it, and juggling offsets and downstream consumers.
 >
@@ -274,9 +273,12 @@ SELECT * FROM `riverflow_payments_risk_score`;
 
 Reference: [`flink/customer_risk_exposure_24h.sql`](../../../flink/customer_risk_exposure_24h.sql)
 
-Step 4 scores each payment individually. But Dana's ops team also needs the customer-level view: *which customers are accumulating the most exception exposure right now?* Here you roll those per-payment scores up into one row per customer, covering their last 24 hours — and it refreshes the moment that customer's next payment is scored.
+Step 4 scores each payment on its own. Dana's ops team also needs the customer-level view: *which customers are accumulating the most exception exposure right now?*
 
-Two things make that work. An `OVER` window recomputes on every event, rather than waiting for a window to close the way `HOP`/`TUMBLE` would. And declaring `PRIMARY KEY (customer_id)` keeps it to one row per customer, updated in place (upsert), instead of adding a new row per payment.
+This step rolls those per-payment scores up into a single row per customer, covering their last 24 hours. Each row refreshes the moment that customer's next payment is scored. Two things make that work:
+
+- An `OVER` window recomputes on every event, instead of waiting for a window to close the way `HOP` and `TUMBLE` do.
+- `PRIMARY KEY (customer_id)` keeps one row per customer, updated in place (upsert) rather than appending a new row per payment.
 
 <img src="./assets/lab3_step5_1.png" alt="Pipeline diagram highlighting Payments Risk Score feeding the Customer Risk Score upsert table" width="800">
 
@@ -320,7 +322,9 @@ SELECT * FROM `riverflow_customer_risk_exposure_24h`;
 <img src="./assets/lab3_step5_2.png" alt="Query result showing one row per customer with payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
 
 > [!TIP]
-> One row per customer — 100 customers, 100 rows — each summarizing the 75–110 payments they've made in the last 24 hours. Every time that customer initiates a new payment, their row updates in place with a fresh exposure figure. Sort by `avg_risk_score` and you have Dana's worklist: the customers her team should be looking at first, current as of seconds ago.
+> One row per customer: 100 customers, 100 rows. Each row summarizes the payments that each customer made in the last 24 hours, and it updates in place with a fresh exposure figure every time they initiate another one.
+>
+> Sort by `avg_risk_score` and you have Dana's worklist — the customers her team should look at first, current as of seconds ago.
 
 #### Checkpoint
 
