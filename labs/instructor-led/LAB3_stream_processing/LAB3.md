@@ -331,7 +331,7 @@ SELECT * FROM `riverflow_customer_risk_exposure_24h`;
 
 ## Conclusion
 
-You produced the two Flink data products Elevate cares about: FX-aware completed payments and externally scored operational risk.
+You produced the three Flink data products Elevate cares about: FX-aware completed payments, externally scored operational risk, and a genuine-upsert trailing-24h risk exposure aggregate per customer.
 
 ## What's next
 
