@@ -16,7 +16,7 @@ data products / `riverpulse_*` views.
 
 **View shortcut:** `SELECT * FROM riverpulse_high_risk_payments LIMIT 20;`
 
-Optional FX-oriented prompt: *Which completed payments have the largest USD-normalized amounts right now?* Expect `amount`, `currency`, `amount_usd` from `riverflow_payments`.
+Optional FX-oriented prompt: *Show me the largest completed payments by USD value, including the original amount and currency.* Expect `amount`, `currency`, `amount_usd` from `riverflow_payments` side by side, so the conversion is visible.
 
 ## 2. Highest-risk customers (last 24 hours)
 
@@ -51,6 +51,23 @@ lifecycle from `completed`.
 
 > **Facilitator note:** Stall / “stuck at authorization” drill-down is **Phase 2
 > backlog**. Do not oversell in-flight stage visibility in Phase 1.
+
+## 4. Payments by customer segment (bonus — needs schema evolution)
+
+**Prompt:** Break down completed payments by customer segment: how many payments and what is the total USD value for each?
+
+**Expected shape:** One row per `segment` (`retail`, `small_business`, `new_partner`,
+`wealth`) with a payment count and summed `amount_usd`.
+
+**Requires the LAB 5 Step 3 bonus.** `riverflow_payments` has no `segment` column as
+built in LAB 3 — participants add it by evolving the materialized table
+(`flink/payments_add_segment.sql`). Ask this *before* the evolution too: Genie
+failing to answer is the setup for why the evolution matters.
+
+> **Facilitator note:** Payments completed before the evolution ran keep `NULL` for
+> `segment` — adding a column is not a backfill. On a stack provisioned hours earlier,
+> expect a meaningful `NULL` bucket alongside the real segments, and call it out rather
+> than letting the room read it as breakage.
 
 ## Facilitator notes
 

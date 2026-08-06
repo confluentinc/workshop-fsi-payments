@@ -1,6 +1,9 @@
 -- Reference Flink SQL: FX rates temporal join (also embedded in Terraform).
 -- CDC topic: riverflow.riverpay.fx_rates (upsert from Postgres riverpay.fx_rates)
 -- Currencies: USD (1.0) + GBP, AUD, CAD, JPY, EUR (ShadowTraffic updates ~5s)
+--
+-- This is v1 of the completed-payments product, as built in LAB 3. LAB 5 Step 3
+-- evolves it in place to add `segment` — see flink/payments_add_segment.sql.
 
 -- ALTER TABLE `riverflow.riverpay.fx_rates`
 --   SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');

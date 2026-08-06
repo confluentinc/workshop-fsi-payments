@@ -27,7 +27,34 @@ Completed **[LAB 4](../LAB4_tableflow/LAB4.md)**. Have catalog, schema, and SQL 
 
 ### Step 2: Ask the three questions
 
-Use prompts from [`sql/genie_prompts.md`](../../../sql/genie_prompts.md).
+Paste these into Genie one at a time:
+
+> [!NOTE]
+> Each prompt takes around 1–2 minutes to complete — Genie has to pick the tables, write the SQL, and run it on your warehouse.
+
+**Q1 — Highest exception-probability payments**
+
+```text
+Which payments are most likely to need manual intervention right now?
+```
+
+**Q2 — Highest-risk customers (last 24 hours)**
+
+```text
+Which customers drive the highest operational exception exposure in the last 24 hours?
+```
+
+**Q3 — Lifecycle completion rate**
+
+```text
+What is the RiverFlow lifecycle completion rate from initiation to completed status?
+```
+
+Optional, if you want to see the FX enrichment at work:
+
+```text
+Show me the largest completed payments by USD value, including the original amount and currency.
+```
 
 > [!NOTE]
 > **Expected shape (not brittle golden rows)**
@@ -40,7 +67,47 @@ Use prompts from [`sql/genie_prompts.md`](../../../sql/genie_prompts.md).
 >
 > Exact IDs/amounts change with live ShadowTraffic data. `risk_score` is **not** fraud.
 
-### Step 3: Optional SQL views
+[`sql/genie_prompts.md`](../../../sql/genie_prompts.md) has the full expected answer shape and view shortcuts for each question.
+
+### Step 3: Answer a question the data product can't answer yet (Schema Evolution)
+
+Reference: [`flink/payments_add_segment.sql`](../../../flink/payments_add_segment.sql)
+
+Ask Genie to break completed payments down by customer segment and it can't — `riverflow_payments` has no `segment` column. Nobody thought to include it when the product was built.
+
+In a batch world this is a change request: a ticket, a backfill, a new table, and a wait. Here it's an edit to the query that's already running. Go back to your **Flink SQL workspace** from LAB 3 and re-run the completed-payments statement with two additions — `c.segment` appended to the end of the `SELECT` list, and a temporal join that supplies it:
+
+```sql
+  LEFT JOIN `riverflow.riverpay.customer_profiles` FOR SYSTEM_TIME AS OF i.`$rowtime` AS c
+    ON c.`customer_id` = i.`customer_id`;
+```
+
+The full statement is in [`flink/payments_add_segment.sql`](../../../flink/payments_add_segment.sql).
+
+Nothing downstream had to be rebuilt, and nothing had to be taken down to do it. You didn't stop the statement, drop and recreate the table, or think about consumer offsets — the **materialized table** owns both the schema and the query, so Flink migrated it in place and kept going. Tableflow then carried the new column into Delta on its own, and Unity Catalog picked it up.
+
+Check the new column in the Databricks **SQL Editor**:
+
+```sql
+SELECT `payment_id`, `customer_id`, `segment`
+FROM `<catalog>`.`<schema>`.`riverflow_payments`
+ORDER BY `completed_at` DESC
+LIMIT 50;
+```
+
+Then go back to Genie and ask the question that failed a minute ago:
+
+```text
+Break down completed payments by customer segment: how many payments and what is the total USD value for each?
+```
+
+> [!TIP]
+> **Why this matters commercially.** Two properties made that a five-minute change instead of a project. The column was **added**, not moved or renamed — existing consumers keep reading the table exactly as before, so nothing had to be coordinated or re-tested. And the profile lookup is a `LEFT JOIN`, so a payment with no matching profile still appears; the table's meaning — every completed payment — is unchanged.
+
+> [!NOTE]
+> Payments that completed **before** you ran this show `NULL` for `segment` — the column is added going forward, not backfilled onto history. Sorting by `completed_at DESC` shows the populated rows first.
+
+### Step 4: Optional SQL views
 
 If operators created RiverPulse views:
 
@@ -56,6 +123,7 @@ Otherwise query `riverflow_payments_risk_score` / `riverflow_payments` directly.
 
 - [ ] Genie (or SQL) answers all three questions
 - [ ] At least one high `risk_score` row has a readable `risk_reason`
+- [ ] `riverflow_payments` carries `segment` in Databricks, and Genie can break payments down by segment
 
 ## Conclusion
 

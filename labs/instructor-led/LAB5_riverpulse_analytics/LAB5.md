@@ -79,6 +79,8 @@ Show me the largest completed payments by USD value, including the original amou
 
 ### Step 3: Answer a question the data product can't answer yet (Schema Evolution)
 
+Reference: [`flink/payments_add_segment.sql`](../../../flink/payments_add_segment.sql) (v1 is [`flink/fx_conversion.sql`](../../../flink/fx_conversion.sql))
+
 Dana comes back with a follow-up: *are these exceptions concentrated in one part of our customer base?* Ask Genie to break completed payments down by customer segment and it can't — `riverflow_payments` has no `segment` column. Nobody thought to include it when the product was built.
 
 In a batch world this is a change request: a ticket, a backfill, a new table, and a wait. Here it's an edit to the query that's already running.
