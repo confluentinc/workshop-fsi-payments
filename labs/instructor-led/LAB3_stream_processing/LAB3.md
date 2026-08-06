@@ -131,8 +131,6 @@ ALTER TABLE `riverflow.payments.status`
 
 ### Step 3: Completed payments + FX conversion
 
-Reference: [`flink/fx_conversion.sql`](../../../flink/fx_conversion.sql)
-
 A payment arrives as four separate events, one per topic — `initiation` (started), `authorization` (approved), `balance_update` (money moved), `status` (final outcome). Here you stitch those four back into one row per payment, and convert the amount to USD. The conversion uses a **[temporal join](https://docs.confluent.io/cloud/current/flink/reference/queries/joins.html#temporal-joins)** (`FOR SYSTEM_TIME AS OF`) to look up the FX rate as it stood at the moment the payment was initiated, rather than the rate right now — so a payment is always priced at the rate it actually got. A row appears only once all four stages have arrived, so this table is your list of genuinely completed payments.
 
 <img src="./assets/lab3_step3_1.png" alt="Pipeline diagram highlighting the lifecycle topics through Flink Temporal Table Join to Completed Payments" width="800">
@@ -179,7 +177,9 @@ FROM `riverflow.payments.initiation` i
 <details>
 <summary>Hint</summary>
 
-Run `DESCRIBE EXTENDED <FX_RATES_TABLE>`  and look for the Watermark.
+Run `DESCRIBE EXTENDED riverflow.payments.initiation` and look for the Watermark.
+
+`FOR SYSTEM_TIME AS OF` takes its as-of time from the **left** side of the join — the payment being priced, not the rate table — so qualify the column with that table's alias.
 
 
 </details>
@@ -211,8 +211,6 @@ SELECT * FROM `riverflow_payments` LIMIT 10;
 ```
 
 ### Step 4: Operational risk via external UDF
-
-Reference: [`flink/risk_udf.sql`](../../../flink/risk_udf.sql)
 
 RiverPay's **Risk Scoring API** is the bank's system of record for how likely a payment needs manual intervention — a hold, a review, or a reject. The **[user-defined function](https://docs.confluent.io/cloud/current/flink/concepts/user-defined-functions.html)** (UDF) `lookup_operational_risk(amount, segment, account_tier)` lets Flink ask that service in-stream, so every payment is scored as it happens instead of in an overnight batch. It returns `risk_score|risk_reason`; it only reads, it never updates the customer's profile. Alongside `amount`, it takes two customer attributes from the profile:
 
@@ -271,7 +269,6 @@ SELECT * FROM `riverflow_payments_risk_score`;
 
 ### Step 5: Customer risk exposure (trailing 24h)
 
-Reference: [`flink/customer_risk_exposure_24h.sql`](../../../flink/customer_risk_exposure_24h.sql)
 
 Step 4 scores each payment on its own. Dana's ops team also needs the customer-level view: *which customers are accumulating the most exception exposure right now?*
 
