@@ -37,17 +37,11 @@ SELECT * FROM `riverflow.riverpay.customer_profiles` LIMIT 5;
 SELECT * FROM `riverflow.riverpay.fx_rates` LIMIT 10;
 ```
 
-> [!NOTE]
-> Results may take up to a minute to appear the first time.
-
 <img src="./assets/lab3_step1_2.png" alt="FX rates query result" width="550">
 
 ```sql
 SELECT * FROM `riverflow.payments.initiation` LIMIT 5;
 ```
-
-> [!NOTE]
-> Results may take up to a minute to appear the first time.
 
 <img src="./assets/lab3_step1_3.png" alt="Payment initiation query result" width="550">
 
@@ -197,9 +191,6 @@ Query the new table to see what it produced:
 SELECT * FROM `riverflow_payments`;
 ```
 
-> [!NOTE]
-> Results may take up to a minute to appear the first time.
-
 <img src="./assets/lab3_step3_2.png" alt="SELECT * FROM riverflow_payments result showing currency, rate_to_usd, and amount_usd columns" width="800">
 
 **Expected result:** Rows appear only for payments that completed all four stages, with `amount_usd` populated.
@@ -261,9 +252,6 @@ Query the new table to see what it produced:
 SELECT * FROM `riverflow_payments_risk_score`;
 ```
 
-> [!NOTE]
-> Results may take up to a minute to appear the first time.
-
 <img src="./assets/lab3_step4_2.png" alt="SELECT * FROM riverflow_payments_risk_score result showing segment, account_tier, risk_score, and risk_reason columns" width="800">
 
 
@@ -312,9 +300,6 @@ Query the new table to see what it produced:
 ```sql
 SELECT * FROM `riverflow_customer_risk_exposure_24h`;
 ```
-
-> [!NOTE]
-> Results may take up to a minute to appear the first time.
 
 <img src="./assets/lab3_step5_2.png" alt="Query result showing one row per customer with payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
 
