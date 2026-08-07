@@ -137,6 +137,9 @@ The column is the customer's relationship type: `retail`, `small_business`, `new
 
 Nothing downstream had to be rebuilt, and nothing had to be taken down to do it. You didn't stop the statement, drop and recreate the table, or think about consumer offsets — the **Materialized Table** owns both the schema and the query, so Flink migrated it in place and kept going. Tableflow then carried the new column into Delta on its own, and Unity Catalog picked it up. End to end, the evolution was seamless
 
+> [!NOTE]
+> The `segment` column appears in Databricks straight away, but every value is `NULL` at first — payments that completed before the change don't carry one. Give it 2–3 minutes for new payments to flow through the updated statement; those are the rows with a segment.
+
 Check the new column in the Databricks **SQL Editor**:
 
 ```sql
