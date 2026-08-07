@@ -56,7 +56,10 @@ FROM `riverflow.payments.initiation` i
 -- =============================================================================
 
 -- ALTER TABLE `riverflow.riverpay.customer_profiles`
---   SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');
+--   SET ('changelog.mode' = 'upsert');
+-- NOTE: do not compact this topic — see flink/fx_conversion.sql. ShadowTraffic
+-- touches a seeded customer every 5s to keep the watermark advancing, so
+-- compaction would discard the profile versions the temporal join looks up.
 -- ALTER TABLE `riverflow.riverpay.customer_profiles`
 --   MODIFY WATERMARK FOR `$rowtime` AS `$rowtime` - INTERVAL '5' SECOND;
 

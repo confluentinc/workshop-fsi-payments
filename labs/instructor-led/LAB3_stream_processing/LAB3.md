@@ -53,7 +53,7 @@ The joins you write in Step 3 only work if the source tables are set up correctl
 SHOW CREATE TABLE `riverflow.riverpay.customer_profiles`;
 ```
 
-<img src="./assets/lab3_step2_1.png" alt="SHOW CREATE TABLE result highlighting changelog.mode upsert and kafka.cleanup-policy compact" width="550">
+<img src="./assets/lab3_step2_1.png" alt="SHOW CREATE TABLE result highlighting changelog.mode upsert" width="550">
 
 ```sql
 SHOW CREATE TABLE `riverflow.riverpay.fx_rates`;
@@ -67,11 +67,11 @@ SHOW CREATE TABLE `riverflow.riverpay.fx_rates`;
 
 Run these one at a time.
 
-Read the topic as a versioned table keyed by `customer_id` — the shape a temporal join needs on its right side, so each payment matches the profile version that was current when it happened. Compaction keeps the newest record per customer on the topic, so that state can always be rebuilt:
+Read the topic as a versioned table keyed by `customer_id` — the shape a temporal join needs on its right side, so each payment matches the profile version that was current when it happened. The topic keeps every version, so the join can look up the profile as it stood at any point in the past:
 
 ```sql
 ALTER TABLE `riverflow.riverpay.customer_profiles`
-  SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');
+  SET ('changelog.mode' = 'upsert');
 ```
 
 Widen the out-of-order tolerance from Confluent's 180 ms default to 5 seconds, so profile updates that arrive slightly late still count in the join instead of being dropped:
@@ -85,7 +85,7 @@ Same for FX — a versioned table keyed by `currency_code`, so each payment conv
 
 ```sql
 ALTER TABLE `riverflow.riverpay.fx_rates`
-  SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');
+  SET ('changelog.mode' = 'upsert');
 ```
 
 Same 5-second tolerance for FX rows, so a rate that lands a little late still prices the payments it should:
@@ -193,10 +193,12 @@ SELECT * FROM `riverflow_payments`;
 
 ### Step 4: Operational risk via external UDF
 
-RiverPay's **Risk Scoring API** is the bank's system of record for how likely a payment needs manual intervention — a hold, a review, or a reject. The **[user-defined function](https://docs.confluent.io/cloud/current/flink/concepts/user-defined-functions.html)** (UDF) `lookup_operational_risk(amount, segment, account_tier)` lets Flink ask that service in-stream, so every payment is scored as it happens instead of in an overnight batch. It returns `risk_score|risk_reason`; it only reads, it never updates the customer's profile. Alongside `amount`, it takes two customer attributes from the profile:
+RiverPay's **Risk Scoring API** is the bank's system of record for how likely a payment needs manual intervention — a hold, a review, or a reject. The **[user-defined function](https://docs.confluent.io/cloud/current/flink/concepts/user-defined-functions.html)** (UDF) `lookup_operational_risk(amount, segment, account_tier)` lets Flink ask that service in-stream, so every payment is scored as it happens instead of in an overnight batch. It returns `risk_score|risk_reason`; it only reads, it never updates the customer's profile. Alongside the amount, it takes two customer attributes from the profile:
 
 - `segment`: customer's relationship type — `retail`, `small_business`, `new_partner`, `wealth`
 - `account_tier`: customer's service tier — `standard` or `premium`
+
+The API's thresholds are absolute dollar figures, so the amount you pass has to be **USD-normalized** — the same FX temporal join you wrote in Step 3. Score the raw amount instead and a ¥6,000 payment (about $40) gets treated like a $6,000 one.
 
 <img src="./assets/lab3_step4_1.png" alt="Pipeline diagram highlighting Customer Profiles and Currency Rates through Flink UDF Lookup to Risk Score" width="800">
 
@@ -214,6 +216,8 @@ SELECT
   enriched.`account_tier`,
   enriched.`amount`,
   enriched.`currency`,
+  enriched.`rate_to_usd`,
+  enriched.`amount_usd`,
   enriched.`payment_type`,
   enriched.`initiated_at`,
   CAST(SPLIT_INDEX(enriched.`risk_payload`, '|', 0) AS DOUBLE) AS `risk_score`,
@@ -227,12 +231,20 @@ FROM (
     c.`account_tier`,
     p.`amount`,
     p.`currency`,
+    fx.`rate_to_usd`,
+    ROUND(p.`amount` * fx.`rate_to_usd`, 2) AS `amount_usd`,
     p.`payment_type`,
     p.`initiated_at`,
-    lookup_operational_risk(p.`amount`, <SEGMENT>, <ACCOUNT_TIER>) AS `risk_payload`
+    lookup_operational_risk(
+      ROUND(p.`amount` * fx.`rate_to_usd`, 2),
+      <SEGMENT>,
+      <ACCOUNT_TIER>
+    ) AS `risk_payload`
   FROM `riverflow.payments.initiation` p
     JOIN `riverflow.riverpay.customer_profiles` FOR SYSTEM_TIME AS OF p.`$rowtime` AS c
       ON c.`customer_id` = p.`customer_id`
+    JOIN `riverflow.riverpay.fx_rates` FOR SYSTEM_TIME AS OF p.`$rowtime` AS fx
+      ON fx.`currency_code` = p.`currency`
 ) AS enriched;
 ```
 

@@ -44,7 +44,7 @@ resource "confluent_flink_statement" "profile_upsert" {
   principal { id = var.service_account_id }
 
   statement_name = "customer-profiles-enable-upsert"
-  statement      = "ALTER TABLE `${var.customer_profiles_topic}` SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');"
+  statement      = "ALTER TABLE `${var.customer_profiles_topic}` SET ('changelog.mode' = 'upsert');"
   properties     = local.flink_properties
   rest_endpoint  = var.flink_rest_endpoint
 
@@ -91,7 +91,7 @@ resource "confluent_flink_statement" "fx_rates_upsert" {
   principal { id = var.service_account_id }
 
   statement_name = "fx-rates-enable-upsert"
-  statement      = "ALTER TABLE `${var.fx_rates_topic}` SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');"
+  statement      = "ALTER TABLE `${var.fx_rates_topic}` SET ('changelog.mode' = 'upsert');"
   properties     = local.flink_properties
   rest_endpoint  = var.flink_rest_endpoint
 
@@ -418,6 +418,8 @@ locals {
       enriched.`account_tier`,
       enriched.`amount`,
       enriched.`currency`,
+      enriched.`rate_to_usd`,
+      enriched.`amount_usd`,
       enriched.`payment_type`,
       enriched.`initiated_at`,
       CAST(SPLIT_INDEX(enriched.`risk_payload`, '|', 0) AS DOUBLE) AS `risk_score`,
@@ -431,12 +433,16 @@ locals {
         c.`account_tier`,
         p.`amount`,
         p.`currency`,
+        fx.`rate_to_usd`,
+        ROUND(p.`amount` * fx.`rate_to_usd`, 2) AS `amount_usd`,
         p.`payment_type`,
         p.`initiated_at`,
-        lookup_operational_risk(p.`amount`, c.`segment`, c.`account_tier`) AS `risk_payload`
+        lookup_operational_risk(ROUND(p.`amount` * fx.`rate_to_usd`, 2), c.`segment`, c.`account_tier`) AS `risk_payload`
       FROM ${local.initiation_fqn} p
         JOIN ${local.profile_fqn} FOR SYSTEM_TIME AS OF p.`$rowtime` AS c
           ON c.`customer_id` = p.`customer_id`
+        JOIN ${local.fx_rates_fqn} FOR SYSTEM_TIME AS OF p.`$rowtime` AS fx
+          ON fx.`currency_code` = p.`currency`
     ) AS enriched
   SQL
 }

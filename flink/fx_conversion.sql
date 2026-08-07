@@ -6,7 +6,12 @@
 -- evolves it in place to add `segment` — see flink/payments_add_segment.sql.
 
 -- ALTER TABLE `riverflow.riverpay.fx_rates`
---   SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');
+--   SET ('changelog.mode' = 'upsert');
+-- NOTE: do not compact this topic. Every currency is rewritten every few
+-- seconds, so compaction discards the historical versions that
+-- FOR SYSTEM_TIME AS OF needs, and foreign-currency payments silently drop
+-- out of the inner join. The CDC connector creates the topic with
+-- cleanup.policy=delete and retention.ms=-1 — leave it that way.
 -- ALTER TABLE `riverflow.riverpay.fx_rates`
 --   MODIFY WATERMARK FOR `$rowtime` AS `$rowtime` - INTERVAL '5' SECOND;
 

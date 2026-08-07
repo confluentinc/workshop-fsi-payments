@@ -233,6 +233,30 @@
           "_gen": "now"
         }
       }
+    },
+    {
+      "name": "customer_profiles_touch",
+      "connection": "postgres",
+      "table": "riverpay.customer_profiles",
+      "op": "update",
+      "localConfigs": {
+        "throttleMs": 5000
+      },
+      "where": {
+        "customer_id": {
+          "_gen": "lookup",
+          "name": "customer_profiles_seed",
+          "path": [
+            "row",
+            "customer_id"
+          ]
+        }
+      },
+      "row": {
+        "updated_at": {
+          "_gen": "now"
+        }
+      }
     }
   ],
   "schedule": {
@@ -245,6 +269,7 @@
       {
         "generators": [
           "customer_profiles",
+          "customer_profiles_touch",
           "fx_rates"
         ]
       }
