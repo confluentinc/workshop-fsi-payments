@@ -32,7 +32,7 @@ Completed **[LAB 4](../LAB4_tableflow/LAB4.md)**. Have catalog, schema, and SQL 
 
    <img src="./assets/lab5_step1_2.png" alt="Genie Agents page with the New button in the top right" width="800">
 
-3. In **Connect your data**, browse to your catalog → schema (both in your credentials email) and select all three RiverFlow tables, then click **Create**
+3. In **Connect your data**, click **All**, browse to your catalog → schema (both in your credentials email) and select all three RiverFlow tables, then click **Create**
 
    <img src="./assets/lab5_step1_3.png" alt="Connect your data dialog with riverflow_customer_risk_exposure_24h, riverflow_payments, and riverflow_payments_risk_score selected" width="550">
 
@@ -79,8 +79,6 @@ Show me the largest completed payments by USD value, including the original amou
 
 ### Step 3: Answer a question the data product can't answer yet (Schema Evolution)
 
-Reference: [`flink/payments_add_segment.sql`](../../../flink/payments_add_segment.sql) (v1 is [`flink/fx_conversion.sql`](../../../flink/fx_conversion.sql))
-
 Dana comes back with a follow-up: *are these exceptions concentrated in one part of our customer base?* Ask Genie to break completed payments down by customer segment and it can't — `riverflow_payments` has no `segment` column. Nobody thought to include it when the product was built.
 
 In a batch world this is a change request: a ticket, a backfill, a new table, and a wait. Here it's an edit to the query that's already running.
@@ -89,7 +87,7 @@ In a batch world this is a change request: a ticket, a backfill, a new table, an
 
 Two blanks are left in the statement below. Fill in the **column** to add to the product, and the **table to join** for it — the same reference data you looked up in LAB 3.
 
-Go back to your **Flink SQL workspace** from LAB 3 and run:
+Go back to your **[Flink SQL workspace](https://confluent.cloud/go/flink)** and run:
 
 ```sql
 SET 'client.statement-name' = 'riverflow-payments-completed-v2';

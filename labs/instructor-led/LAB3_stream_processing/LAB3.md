@@ -47,7 +47,7 @@ SELECT * FROM `riverflow.payments.initiation` LIMIT 5;
 
 ### Step 2: Confirm changelog modes / watermarks
 
-The joins you write in Step 3 only work if the source tables are set up correctly — reference data (profiles, FX rates) has to be keyed and updatable, payment events have to stay as a plain stream, and every table needs a timestamp Flink can order by. That's already done for you. Check one of each so you know what you're building on:
+The joins you write in Step 3 only work if the source tables are set up correctly — reference data (profiles, FX rates) has to be keyed and updatable, payment events have to stay as a plain stream, and every table needs a timestamp Flink can order by. That's already done for you. Run `SHOW CREATE TABLE` on both reference tables below and confirm each one reports `'changelog.mode' = 'upsert'`:
 
 ```sql
 SHOW CREATE TABLE `riverflow.riverpay.customer_profiles`;
@@ -58,8 +58,6 @@ SHOW CREATE TABLE `riverflow.riverpay.customer_profiles`;
 ```sql
 SHOW CREATE TABLE `riverflow.riverpay.fx_rates`;
 ```
-
-**Expected result:** upsert + compact on profiles/FX; append on lifecycle topics; `$rowtime` watermarks present.
 
 > [!NOTE]
 > Profiles and FX rates are **upsert** because they're mutable reference data keyed by `customer_id` / `currency_code` — each new value replaces the old one, giving the temporal join a well-defined "current value per key" to look up. Lifecycle topics are **append** because each stage happens once per `payment_id`, so there's nothing to overwrite.
@@ -164,7 +162,7 @@ FROM `riverflow.payments.initiation` i
     ON i.`payment_id` = b.`payment_id`
   INNER JOIN `riverflow.payments.status` s
     ON i.`payment_id` = s.`payment_id`
-  JOIN <FX_RATES_TABLE> FOR SYSTEM_TIME AS OF <WATERMARK_COLUMN> AS fx
+  JOIN `<FX_RATES_TABLE>` FOR SYSTEM_TIME AS OF <WATERMARK_COLUMN> AS fx
     ON fx.`currency_code` = i.`currency`;
 ```
 
@@ -192,14 +190,6 @@ SELECT * FROM `riverflow_payments`;
 ```
 
 <img src="./assets/lab3_step3_2.png" alt="SELECT * FROM riverflow_payments result showing currency, rate_to_usd, and amount_usd columns" width="800">
-
-**Expected result:** Rows appear only for payments that completed all four stages, with `amount_usd` populated.
-
-Validate (SQL workspace or left-pane MT preview / descriptor):
-
-```sql
-SELECT * FROM `riverflow_payments` LIMIT 10;
-```
 
 ### Step 4: Operational risk via external UDF
 
