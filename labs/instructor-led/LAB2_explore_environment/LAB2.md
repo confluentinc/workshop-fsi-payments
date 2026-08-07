@@ -66,6 +66,13 @@ The Postgres CDC source connector is **pre-provisioned**. Open **Connectors** an
 > -- Shows kind, argument types, return type, and signature
 > ```
 
+`lookup_operational_risk` calls the shared Risk Scoring API. Given an amount, customer segment, and account tier, it returns a single `score|reason` string:
+
+- **score** — an **operational exception probability** from `0.0` (routine) to `1.0` (near-certain exception): how likely the payment is to need manual review. It is *not* a fraud score. Downstream, `>= 0.5` counts as high risk.
+- **reason** — a short, human-readable explanation of that score.
+
+In **LAB 3** you'll call this UDF from Flink SQL to build the `riverflow_payments_risk_score` data product.
+
 Test the function by running:
 
 ```sql
@@ -74,10 +81,6 @@ SELECT lookup_operational_risk(12000, 'retail', 'standard');
 ```
 
 <img src="./assets/lab2_step3_4.png" alt="SELECT lookup_operational_risk result" width="550">
-
-> [!NOTE]
-> `lookup_operational_risk` calls the shared Risk Scoring API and returns a `score|reason` string given an amount, customer segment, and tier. The score (e.g. `0.42`) is an **operational exception probability** from 0.0 (routine) to 1.0 (near-certain exception) — how likely the payment is to need manual review, not a fraud score. `>= 0.5` is treated as "high risk" downstream. In **LAB 3**, you'll call this UDF from Flink SQL to build the `riverflow_payments_risk_score` data product.
-
 
 > [!NOTE]
 > **Cold UDF latency:** the first `lookup_operational_risk(...)` call can take up to ~1 minute (Flink compute warm-up + HTTPS to the shared Risk API). Re-runs are usually much faster. If it hangs past ~2 minutes, check `SHOW CONNECTIONS` again or ask the instructor.
