@@ -31,27 +31,16 @@ In [Confluent Cloud](https://confluent.cloud/environments): your environment →
 | `riverflow.payments.balance_update` | Stage 3 |
 | `riverflow.payments.status` | Stage 4 |
 
-**Expected result:** Profiles seeded (~100), FX rows for USD/GBP/AUD/CAD/JPY/EUR, and ongoing payment events. Currencies include USD plus foreign currencies.
-
 ### Step 2: Connectors
 
-The Postgres CDC source is **pre-provisioned** for instructor-led (you do not create it in this lab). Open **Connectors** and confirm it is **Running** with table include list covering `riverpay.customer_profiles` and `riverpay.fx_rates`.
+The Postgres CDC source connector is **pre-provisioned**. Open **Connectors** and confirm it is **Running** with table include list covering `riverpay.customer_profiles` and `riverpay.fx_rates`.
 
 <img src="./assets/lab2_step2.png" alt="Postgres CDC connector running in Confluent Cloud" width="400">
 
-
-> [!NOTE]
-> Building the CDC connector from scratch is out of scope for this path.
 ### Step 3: Flink compute pool
 
 1. Open **Flink** → **Compute pools**. Pick the workshop pool, **not** the default one. It is named `<team>_flink_compute_pool_<id>` — for example `wp001-tf-db_flink_compute_pool_16255802`, where `wp001` is your team prefix.
 2. Open its **SQL workspace**
-
-    ```sql
-    SHOW USER FUNCTIONS;
-    -- Expect lookup_operational_risk when operators pre-registered the UDF
-    ```
-
 3. Set catalog = your environment, database = your Kafka cluster
 4. Run:
 
@@ -77,10 +66,12 @@ The Postgres CDC source is **pre-provisioned** for instructor-led (you do not cr
 > -- Shows kind, argument types, return type, and signature
 > ```
 
-    ```sql
-    SELECT lookup_operational_risk(12000, 'retail', 'standard');
-    -- Expect a string like: 0.42|High amount for retail standard tier
-    ```
+Test the function by running:
+
+```sql
+SELECT lookup_operational_risk(12000, 'retail', 'standard');
+-- Expect a string like: 0.42|High amount for retail standard tier
+```
 
 <img src="./assets/lab2_step3_4.png" alt="SELECT lookup_operational_risk result" width="550">
 
