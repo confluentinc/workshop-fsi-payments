@@ -73,7 +73,7 @@ materialized-table SQL and Tableflow** as attendee lab work.
 | `riverflow_customer_risk_exposure_24h` | Flink MT — trailing-24h `OVER` aggregate per customer, `PRIMARY KEY (customer_id)` (genuine upsert) |
 
 Tableflow publishes **only** the three Flink data products (`riverflow_payments` append,
-`riverflow_payments_risk_score` upsert, `riverflow_customer_risk_exposure_24h` upsert), with **Tableflow data TTL** used for a
+`riverflow_payments_risk_score` append, `riverflow_customer_risk_exposure_24h` upsert), with **Tableflow data TTL** used for a
 right-to-forget / GDPR talking point. Raw lifecycle and CDC source topics are not
 Tableflow-enabled in Phase 1. Downstream views: `riverpulse_high_risk_payments`,
 `riverpulse_customer_risk_24h`, `riverpulse_lifecycle_completion`.
@@ -100,7 +100,7 @@ instructor-led Azure, `terraform/aws-demo/`, `terraform/aws/`, and
 - Security: light PII + a brief CSFLE talking point only — not a full CSFLE walkthrough.
 - Flink patterns:
   1. 4-way inner join → completed `riverflow_payments` (append).
-  2. Temporal join initiation × `customer_profiles` → enrich inputs; **external UDF** (shared risk API) → `risk_score` / `risk_reason` (upsert).
+  2. Temporal join initiation × `customer_profiles` → enrich inputs; **external UDF** (shared risk API) → `risk_score` / `risk_reason` (append, one row per payment).
   3. Temporal join payments × `fx_rates` (CDC upsert versioned rates) → cross-currency conversion on the completed-payments (or enrichment) path.
   4. Tableflow **data TTL** / right-to-forget as a lab talking point (fit to GDPR narrative; do not force a destructive attendee demo).
 - Topics: lifecycle-specific (initiation, authorization, balance update, status) plus profile + FX CDC topics.

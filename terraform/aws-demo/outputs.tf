@@ -33,7 +33,7 @@ output "workshop_summary" {
 
     Flink data products → Tableflow:
       - ${local.payments_topic} (append — completed payments, 4-way join + FX TTJ)
-      - ${local.risk_score_topic} (upsert — profile TTJ + ${var.enable_risk_udf ? "external risk UDF" : "CASE heuristics (set enable_risk_udf=true after building JAR)"})
+      - ${local.risk_score_topic} (append — profile TTJ + ${var.enable_risk_udf ? "external risk UDF" : "CASE heuristics (set enable_risk_udf=true after building JAR)"})
       - ${local.customer_risk_exposure_topic} (upsert — trailing-24h per-customer aggregate)
 
     Risk API: ${var.enable_risk_api ? "http://${module.postgres.public_dns}:8089" : "(disabled)"}

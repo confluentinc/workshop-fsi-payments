@@ -9,7 +9,7 @@ Publish the Flink data products to Databricks Unity Catalog with Tableflow (Delt
 ### What you'll accomplish
 
 1. Confirm catalog integration (pre-provisioned)
-2. Enable Tableflow on `riverflow_payments` (append), `riverflow_payments_risk_score` (upsert), and `riverflow_customer_risk_exposure_24h` (upsert)
+2. Enable Tableflow on `riverflow_payments` (append), `riverflow_payments_risk_score` (append), and `riverflow_customer_risk_exposure_24h` (upsert)
 3. Verify Delta tables in Databricks
 
 ### Prerequisites
@@ -29,7 +29,7 @@ Enable Tableflow for:
 | Topic / table | Mode |
 |---------------|------|
 | `riverflow_payments` | append |
-| `riverflow_payments_risk_score` | upsert |
+| `riverflow_payments_risk_score` | append |
 | `riverflow_customer_risk_exposure_24h` | upsert |
 
 Do **not** Tableflow-enable raw lifecycle CDC topics in this workshop.

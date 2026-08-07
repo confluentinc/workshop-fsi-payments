@@ -49,7 +49,7 @@ FROM `riverflow.payments.initiation` i
     ON fx.`currency_code` = i.`currency`;
 
 -- =============================================================================
--- 2) Operational risk — temporal join → riverflow_payments_risk_score (upsert)
+-- 2) Operational risk — temporal join → riverflow_payments_risk_score (append)
 -- Inputs: initiation + customer_profiles. CASE heuristics are interim;
 -- Elevate replaces scoring with an external risk UDF (shared workshop API).
 -- risk_score ≠ fraud.

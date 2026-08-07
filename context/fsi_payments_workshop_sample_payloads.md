@@ -152,9 +152,9 @@ in effect at initiation time. Progressive / stall-aware state is Phase 2 backlog
 }
 ```
 
-## Derived risk output (Flink temporal join → Tableflow upsert)
+## Derived risk output (Flink temporal join → Tableflow append)
 
-Compacted / upsert table: `riverflow_payments_risk_score`. `risk_score`
+Append table, one row per payment: `riverflow_payments_risk_score`. `risk_score`
 is operational exception probability (0–1), not a fraud score. The scoring
 logic (Flink CASE fallback, external UDF, and the Risk Scoring API all agree)
 only ever emits one of six fixed `(risk_score, risk_reason)` pairs — see
@@ -194,7 +194,7 @@ Phase 1 Tableflow publishes **only** Flink data products:
 
 **`riverflow_payments`** (append) — completed payments from the 4-way inner join.
 
-**`riverflow_payments_risk_score`** (upsert) — one row per `payment_id` with latest risk state:
+**`riverflow_payments_risk_score`** (append) — one row per `payment_id` with its risk state:
 
 | payment_id | risk_score | risk_reason | enrichment_timestamp |
 |---|---|---|---|

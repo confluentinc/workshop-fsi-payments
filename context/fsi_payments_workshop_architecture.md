@@ -33,7 +33,7 @@ flowchart LR
     T_BAL["riverflow.payments.balance_update"]
     T_STAT["riverflow.payments.status"]
     T_PAY[("riverflow_payments<br/>completed / append")]
-    T_RISK[("riverflow_payments_risk_score<br/>upsert")]
+    T_RISK[("riverflow_payments_risk_score<br/>append")]
     FLINK_PAY{{"Flink<br/>4-way join + FX TTJ"}}
     FLINK_RISK{{"Flink<br/>Profile TTJ + risk UDF"}}
     TF_PAY["Tableflow append + TTL"]

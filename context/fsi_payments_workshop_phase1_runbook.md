@@ -98,7 +98,7 @@ Reference SQL: `flink/` (risk + FX; update as patterns land).
 
 ### Step 6 — Tableflow serving
 
-**Demo:** Terraform enables Tableflow (Delta) on **`riverflow_payments`** (append) and **`riverflow_payments_risk_score`** (upsert), plus Unity Catalog integration and Tableflow data TTL for right-to-forget. **Instructor-led:** attendees enable Tableflow; TTL is a guided talking point. Raw lifecycle topics are not Tableflow-enabled.
+**Demo:** Terraform enables Tableflow (Delta) on **`riverflow_payments`** (append) and **`riverflow_payments_risk_score`** (append), plus Unity Catalog integration and Tableflow data TTL for right-to-forget. **Instructor-led:** attendees enable Tableflow; TTL is a guided talking point. Raw lifecycle topics are not Tableflow-enabled.
 
 **Expected result:** Both data products visible in the Databricks workshop catalog.
 

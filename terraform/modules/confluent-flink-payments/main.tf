@@ -2,7 +2,7 @@
 # Flink Materialized Tables — RiverPay Payments
 # ===============================
 # 1. riverflow_payments — 4-way inner join + FX temporal join → append
-# 2. riverflow_payments_risk_score — temporal join initiation × profile → upsert
+# 2. riverflow_payments_risk_score — temporal join initiation × profile → append
 #    (external risk UDF replaces CASE heuristics in Elevate follow-on work)
 # risk_score = operational exception probability (0–1), NOT fraud.
 #

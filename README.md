@@ -56,7 +56,7 @@ As instant-payments volume grows, RiverPay's ops team is flying blind between ba
 4. **Serve** those products via Tableflow into Unity Catalog (TTL / right-to-forget talking point)
 5. **Analyze** the data with natural language using Databricks *Genie*
 
-**Tableflow publishes only the three Flink data products** (`riverflow_payments` append, `riverflow_payments_risk_score` upsert, `riverflow_customer_risk_exposure_24h` upsert). Raw lifecycle topics stay Kafka sources.
+**Tableflow publishes only the three Flink data products** (`riverflow_payments` append, `riverflow_payments_risk_score` append, `riverflow_customer_risk_exposure_24h` upsert). Raw lifecycle topics stay Kafka sources.
 
 ### 🎓 Key Learning Outcomes
 
@@ -89,7 +89,7 @@ Full narrative skin: [`USECASE.md`](USECASE.md). Architecture notes: [`context/f
 | Balance update | ShadowTraffic → Kafka | `riverflow.payments.balance_update` | No |
 | Status | ShadowTraffic → Kafka | `riverflow.payments.status` | No |
 | Completed payments | Flink MT (inner join + FX TTJ) | `riverflow_payments` | Yes (append) |
-| Risk score | Flink MT (profile TTJ + risk UDF) | `riverflow_payments_risk_score` | Yes (upsert) |
+| Risk score | Flink MT (profile TTJ + risk UDF) | `riverflow_payments_risk_score` | Yes (append) |
 | Customer risk exposure | Flink MT (trailing-24h OVER aggregate) | `riverflow_customer_risk_exposure_24h` | Yes (upsert) |
 
 ## 🔬 Workshop Labs

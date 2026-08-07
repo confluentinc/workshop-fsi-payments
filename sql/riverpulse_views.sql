@@ -1,7 +1,7 @@
 -- RiverPulse Genie / Databricks SQL views (created by Terraform after Tableflow sync)
 -- Tableflow publishes only Flink data products:
 --   riverflow_payments (append — completed)
---   riverflow_payments_risk_score (upsert — per payment)
+--   riverflow_payments_risk_score (append — per payment)
 --   riverflow_customer_risk_exposure_24h (upsert — per customer, trailing 24h)
 
 CREATE OR REPLACE VIEW riverpulse_high_risk_payments AS

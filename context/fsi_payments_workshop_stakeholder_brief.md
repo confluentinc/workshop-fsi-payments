@@ -95,7 +95,7 @@ Behind the scenes, Confluent Cloud:
 1. **CDC** streams customer profiles from Postgres into Kafka.
 2. **ShadowTraffic** generates the payment lifecycle events (demo data).
 3. **Flink** temporally joins profile × payment activity to produce `risk_score`.
-4. **Tableflow** materializes append (payments) and upsert (`risk_score`) tables.
+4. **Tableflow** materializes append (payments, `risk_score`) and upsert (customer risk exposure) tables.
 5. **Databricks Genie** (RiverPulse) answers the business questions in natural language.
 
 Topic naming: Kafka streams use the `riverflow.*` prefix; company-owned
@@ -119,7 +119,7 @@ Formalized topic names:
 | CDC | `riverflow.riverpay.customer_profiles` |
 | Lifecycle sources | `riverflow.payments.{initiation,authorization,balance_update,status}` |
 | Completed payments MT | `riverflow_payments` (append) |
-| Risk MT | `riverflow_payments_risk_score` (upsert) |
+| Risk MT | `riverflow_payments_risk_score` (append) |
 
 **Phase 1 is Confluent Cloud only.** CP/CPC portability is design intent for
 later, not demonstrated yet.

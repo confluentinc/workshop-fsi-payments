@@ -4,7 +4,7 @@ Use these prompts in Databricks Genie against the Tableflow-published Flink
 data products / `riverpulse_*` views.
 
 **Published tables (Phase 1):** `riverflow_payments` (append, completed only),
-`riverflow_payments_risk_score` (upsert), `riverflow_customer_risk_exposure_24h` (upsert).
+`riverflow_payments_risk_score` (append, one row per payment), `riverflow_customer_risk_exposure_24h` (upsert).
 
 ## 1. Highest exception-probability payments
 
