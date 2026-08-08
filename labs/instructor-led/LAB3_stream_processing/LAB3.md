@@ -198,7 +198,7 @@ RiverPay's **Risk Scoring API** is the bank's system of record for how likely a 
 - `segment`: customer's relationship type — `retail`, `small_business`, `new_partner`, `wealth`
 - `account_tier`: customer's service tier — `standard` or `premium`
 
-The API's thresholds are absolute dollar figures, so the amount you pass has to be **USD-normalized** — the same FX temporal join you wrote in Step 3. Score the raw amount instead and a ¥6,000 payment (about $40) gets treated like a $6,000 one.
+The API's thresholds are absolute dollar figures, so the amount you pass has to be **USD-normalized** — the same FX temporal join you wrote in Step 3. Without it, a ¥6,000 payment — about $40 — would be scored as if it were $6,000.
 
 <img src="./assets/lab3_step4_1.png" alt="Pipeline diagram highlighting Customer Profiles and Currency Rates through Flink UDF Lookup to Risk Score" width="800">
 

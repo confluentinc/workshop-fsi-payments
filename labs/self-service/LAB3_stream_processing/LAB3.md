@@ -164,7 +164,9 @@ SELECT * FROM `riverflow_payments` LIMIT 10;
 
 Reference: [`flink/risk_udf.sql`](../../../flink/risk_udf.sql)
 
-RiverPay's **Risk Scoring API** is the bank's system of record for how likely a payment needs manual intervention — a hold, a review, or a reject. The **UDF** `lookup_operational_risk(amount, segment, account_tier)` lets Flink ask that service in-stream, so every payment is scored as it happens instead of in an overnight batch. It returns `risk_score|risk_reason`; it only reads, it never updates the customer's profile. The API's thresholds are absolute dollar figures, so the amount passed in is **USD-normalized** via the same FX temporal join used for `riverflow_payments` — scoring the raw amount would treat a ¥6,000 payment (about $40) like a $6,000 one.
+RiverPay's **Risk Scoring API** is the bank's system of record for how likely a payment needs manual intervention — a hold, a review, or a reject. The **UDF** `lookup_operational_risk(amount, segment, account_tier)` lets Flink ask that service in-stream, so every payment is scored as it happens instead of in an overnight batch. It returns `risk_score|risk_reason`; it only reads, it never updates the customer's profile.
+
+The API's thresholds are absolute dollar figures, so the amount you pass has to be **USD-normalized** — the same FX temporal join you wrote in Step 3. Without it, a ¥6,000 payment — about $40 — would be scored as if it were $6,000.
 
 `segment` and `account_tier` come from the **customer profile** (temporal join), not the payment event — payment carries `amount` / `currency`; the profile supplies slowly changing customer context used as risk inputs.
 
