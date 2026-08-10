@@ -186,7 +186,7 @@ Run `DESCRIBE EXTENDED riverflow.payments.initiation` and look for the Watermark
 Query the new table to see what it produced:
 
 ```sql
-SELECT * FROM `riverflow_payments`;
+SELECT * FROM `riverflow_payments` LIMIT 10;
 ```
 
 <img src="./assets/lab3_step3_2.png" alt="SELECT * FROM riverflow_payments result showing currency, rate_to_usd, and amount_usd columns" width="800">
@@ -251,7 +251,7 @@ FROM (
 Query the new table to see what it produced:
 
 ```sql
-SELECT * FROM `riverflow_payments_risk_score`;
+SELECT * FROM `riverflow_payments_risk_score` LIMIT 10;
 ```
 
 <img src="./assets/lab3_step4_2.png" alt="SELECT * FROM riverflow_payments_risk_score result showing segment, account_tier, risk_score, and risk_reason columns" width="800">
