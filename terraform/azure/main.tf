@@ -524,7 +524,7 @@ resource "confluent_flink_statement" "risk_api_connection" {
     secret = module.flink.flink_api_secret
   }
 
-  depends_on = [module.flink, null_resource.byo_risk_api_deploy]
+  depends_on = [module.flink, null_resource.byo_risk_api_deploy, module.confluent_platform]
 }
 
 resource "confluent_flink_statement" "risk_udf_function" {
@@ -557,6 +557,7 @@ resource "confluent_flink_statement" "risk_udf_function" {
   depends_on = [
     confluent_flink_artifact.risk_udf,
     confluent_flink_statement.risk_api_connection,
+    module.confluent_platform,
   ]
 }
 

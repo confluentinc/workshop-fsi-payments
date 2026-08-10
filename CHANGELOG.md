@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [v0.2.2] - 2026-08-10
 
 ### Added
 
@@ -11,6 +11,10 @@
 
 - `riverpulse_customer_risk_24h` Databricks view (name unchanged) now passes through the Flink-native `riverflow_customer_risk_exposure_24h` table instead of aggregating `riverflow_payments_risk_score` on the Databricks side.
 - Bumped the pinned `confluentinc/confluent` provider to `2.81.0` in `terraform/aws-demo` and `terraform/azure` — `table_options` on `confluent_flink_materialized_table` requires >= 2.80.0.
+
+### Fixed
+
+- `terraform/azure`: `confluent_flink_statement.risk_api_connection` / `risk_udf_function` now `depends_on = [..., module.confluent_platform]`, so they wait for the `app_manager` service account's `EnvironmentAdmin` role binding to finish propagating before running as that principal. Previously only the service-account ID was an implicit dependency, not the role grant itself, so Terraform could fire the Flink statement before RBAC propagated, intermittently failing with "Service account or user does not have enough permissions."
 
 ### Known limitations
 
