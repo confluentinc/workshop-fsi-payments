@@ -128,6 +128,9 @@ SELECT * FROM `riverflow_payments_risk_score` LIMIT 10;
 SELECT * FROM `riverflow_customer_risk_exposure_24h` LIMIT 10;
 ```
 
+> [!NOTE]
+> The first run may ask you to select a warehouse, and to start it if it's stopped. Pick the warehouse in your workspace and start it — it comes up in a few seconds, then the query runs.
+
 <img src="./assets/lab4_step3_4.png" alt="Databricks SQL Editor showing riverflow_customer_risk_exposure_24h rows with customer_id, segment, account_tier, payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
 
 > [!TIP]
