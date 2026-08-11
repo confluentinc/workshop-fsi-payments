@@ -75,7 +75,7 @@ Reference: [`flink/payments_add_segment.sql`](../../../flink/payments_add_segmen
 
 Ask Genie to break completed payments down by customer segment and it can't — `riverflow_payments` has no `segment` column. Nobody thought to include it when the product was built.
 
-In a batch world this is a change request: a ticket, a backfill, a new table, and a wait. Here it's an edit to the query that's already running. Go back to your **Flink SQL workspace** from LAB 3 and re-run the completed-payments statement with two additions — `c.segment` appended to the end of the `SELECT` list, and a temporal join that supplies it:
+In a batch world this is a change request: a ticket, a backfill, a new table, and a wait. With Confluent's materialized tables it's far easier — a simple edit to the query that's already running, and Flink evolves the table in place. Go back to your **Flink SQL workspace** from LAB 3 and re-run the completed-payments statement with two additions — `c.segment` appended to the end of the `SELECT` list, and a temporal join that supplies it:
 
 ```sql
   LEFT JOIN `riverflow.riverpay.customer_profiles` FOR SYSTEM_TIME AS OF i.`$rowtime` AS c
@@ -90,7 +90,7 @@ Check the new column in the Databricks **SQL Editor**:
 
 ```sql
 SELECT `payment_id`, `customer_id`, `segment`
-FROM `<catalog>`.`<schema>`.`riverflow_payments`
+FROM `riverflow_payments`
 ORDER BY `completed_at` DESC
 LIMIT 50;
 ```

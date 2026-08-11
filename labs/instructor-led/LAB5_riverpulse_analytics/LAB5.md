@@ -81,7 +81,7 @@ Show me the largest completed payments by USD value, including the original amou
 
 Dana comes back with a follow-up: *are these exceptions concentrated in one part of our customer base?* Ask Genie to break completed payments down by customer segment and it can't — `riverflow_payments` has no `segment` column. Nobody thought to include it when the product was built.
 
-In a batch world this is a change request: a ticket, a backfill, a new table, and a wait. Here it's an edit to the query that's already running.
+In a batch world this is a change request: a ticket, a backfill, a new table, and a wait. With Confluent's materialized tables it's far easier — a simple edit to the query that's already running, and Flink evolves the table in place.
 
 #### 🧩 Schema Evolution Challenge
 
@@ -144,7 +144,7 @@ Check the new column in the Databricks **SQL Editor**:
 
 ```sql
 SELECT `payment_id`, `customer_id`, `segment`
-FROM `<catalog>`.`<schema>`.`riverflow_payments`
+FROM `riverflow_payments`
 ORDER BY `completed_at` DESC
 LIMIT 50;
 ```
