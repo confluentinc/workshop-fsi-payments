@@ -1,0 +1,61 @@
+*.DS_Store
+TODO.txt
+storyboard.md
+
+####
+# SSL/TLS
+####
+*.pem
+*.pfx
+*.crt
+*.key
+*.csr
+*.crl
+
+####
+# TERRAFORM
+####
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.tfstate.lock.info
+.terraformrc
+terraform.rc
+
+# Generated connection files and SSH keys
+terraform/aws-demo/generated/**
+!terraform/aws-demo/generated/connections/.gitkeep
+terraform/aws-demo/aws-config/*
+!terraform/aws-demo/aws-config/.gitkeep
+terraform/aws-demo/sshkey-*.pem
+terraform/aws/generated/**
+!terraform/aws/generated/connections/.gitkeep
+terraform/aws/sshkey-*.pem
+terraform/azure/generated/**
+!terraform/azure/generated/connections/.gitkeep
+terraform/azure/sshkey-*.pem
+terraform/azure-shared/generated/**
+!terraform/azure-shared/generated/connections/.gitkeep
+terraform/azure-shared/sshkey-*.pem
+
+# cp-rosa local kube leftovers (never commit)
+terraform/cp-rosa/**/kubeconfig*
+terraform/cp-rosa/**/*.kubeconfig
+
+# ShadowTraffic / local secrets
+shadowtraffic/connections*.json
+**/config.local.json
+
+# Local content
+tmp/
+
+# Superpowers subagent-driven-development scratch workspace
+.superpowers/

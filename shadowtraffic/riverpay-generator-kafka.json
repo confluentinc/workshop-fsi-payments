@@ -1,0 +1,640 @@
+{
+  "generators": [
+    {
+      "name": "payment_initiation",
+      "connection": "kafka",
+      "topic": "riverflow.payments.initiation",
+      "vars": {
+        "payment_id": {
+          "_gen": "sequentialString",
+          "expr": "PMT-~d",
+          "startingFrom": 202607110000
+        },
+        "customer_id": {
+          "_gen": "oneOf",
+          "choices": [
+            "CUST-100000",
+            "CUST-100001",
+            "CUST-100002",
+            "CUST-100003",
+            "CUST-100004",
+            "CUST-100005",
+            "CUST-100006",
+            "CUST-100007",
+            "CUST-100008",
+            "CUST-100009",
+            "CUST-100010",
+            "CUST-100011",
+            "CUST-100012",
+            "CUST-100013",
+            "CUST-100014",
+            "CUST-100015",
+            "CUST-100016",
+            "CUST-100017",
+            "CUST-100018",
+            "CUST-100019",
+            "CUST-100020",
+            "CUST-100021",
+            "CUST-100022",
+            "CUST-100023",
+            "CUST-100024",
+            "CUST-100025",
+            "CUST-100026",
+            "CUST-100027",
+            "CUST-100028",
+            "CUST-100029",
+            "CUST-100030",
+            "CUST-100031",
+            "CUST-100032",
+            "CUST-100033",
+            "CUST-100034",
+            "CUST-100035",
+            "CUST-100036",
+            "CUST-100037",
+            "CUST-100038",
+            "CUST-100039",
+            "CUST-100040",
+            "CUST-100041",
+            "CUST-100042",
+            "CUST-100043",
+            "CUST-100044",
+            "CUST-100045",
+            "CUST-100046",
+            "CUST-100047",
+            "CUST-100048",
+            "CUST-100049",
+            "CUST-100050",
+            "CUST-100051",
+            "CUST-100052",
+            "CUST-100053",
+            "CUST-100054",
+            "CUST-100055",
+            "CUST-100056",
+            "CUST-100057",
+            "CUST-100058",
+            "CUST-100059",
+            "CUST-100060",
+            "CUST-100061",
+            "CUST-100062",
+            "CUST-100063",
+            "CUST-100064",
+            "CUST-100065",
+            "CUST-100066",
+            "CUST-100067",
+            "CUST-100068",
+            "CUST-100069",
+            "CUST-100070",
+            "CUST-100071",
+            "CUST-100072",
+            "CUST-100073",
+            "CUST-100074",
+            "CUST-100075",
+            "CUST-100076",
+            "CUST-100077",
+            "CUST-100078",
+            "CUST-100079",
+            "CUST-100080",
+            "CUST-100081",
+            "CUST-100082",
+            "CUST-100083",
+            "CUST-100084",
+            "CUST-100085",
+            "CUST-100086",
+            "CUST-100087",
+            "CUST-100088",
+            "CUST-100089",
+            "CUST-100090",
+            "CUST-100091",
+            "CUST-100092",
+            "CUST-100093",
+            "CUST-100094",
+            "CUST-100095",
+            "CUST-100096",
+            "CUST-100097",
+            "CUST-100098",
+            "CUST-100099"
+          ]
+        },
+        "source_account": {
+          "_gen": "sequentialString",
+          "expr": "ACC-~d",
+          "startingFrom": 88000000
+        },
+        "destination_account": {
+          "_gen": "sequentialString",
+          "expr": "ACC-~d",
+          "startingFrom": 55000000
+        },
+        "amount": {
+          "_gen": "oneOf",
+          "choices": [
+            { "_gen": "uniformDistribution", "bounds": [50, 6000], "decimals": 2 },
+            { "_gen": "uniformDistribution", "bounds": [50, 6000], "decimals": 2 },
+            { "_gen": "uniformDistribution", "bounds": [50, 6000], "decimals": 2 },
+            { "_gen": "uniformDistribution", "bounds": [50, 6000], "decimals": 2 },
+            { "_gen": "uniformDistribution", "bounds": [50, 6000], "decimals": 2 },
+            { "_gen": "uniformDistribution", "bounds": [50, 6000], "decimals": 2 },
+            { "_gen": "uniformDistribution", "bounds": [50, 6000], "decimals": 2 },
+            { "_gen": "uniformDistribution", "bounds": [50, 6000], "decimals": 2 },
+            { "_gen": "uniformDistribution", "bounds": [6000, 10000], "decimals": 2 },
+            { "_gen": "uniformDistribution", "bounds": [10000, 15000], "decimals": 2 }
+          ]
+        },
+        "currency": {
+          "_gen": "oneOf",
+          "choices": [
+            "USD",
+            "USD",
+            "USD",
+            "GBP",
+            "AUD",
+            "CAD",
+            "JPY",
+            "EUR"
+          ]
+        },
+        "channel": {
+          "_gen": "oneOf",
+          "choices": [
+            "mobile_app",
+            "online_banking",
+            "partner_api"
+          ]
+        }
+      },
+      "key": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "payment_id"
+        }
+      },
+      "value": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "payment_id"
+        },
+        "customer_id": {
+          "_gen": "var",
+          "var": "customer_id"
+        },
+        "source_account": {
+          "_gen": "var",
+          "var": "source_account"
+        },
+        "destination_account": {
+          "_gen": "var",
+          "var": "destination_account"
+        },
+        "amount": {
+          "_gen": "var",
+          "var": "amount"
+        },
+        "currency": {
+          "_gen": "var",
+          "var": "currency"
+        },
+        "payment_type": "instant_credit_transfer",
+        "channel": {
+          "_gen": "var",
+          "var": "channel"
+        },
+        "initiated_at": {
+          "_gen": "now"
+        },
+        "status": "initiated"
+      },
+      "localConfigs": {
+        "throttleMs": 2500,
+        "avroSchemaHint": {
+          "key": {
+            "type": "record",
+            "name": "PaymentInitiationKey",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              }
+            ]
+          },
+          "value": {
+            "type": "record",
+            "name": "PaymentInitiation",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              },
+              {
+                "name": "customer_id",
+                "type": "string"
+              },
+              {
+                "name": "source_account",
+                "type": "string"
+              },
+              {
+                "name": "destination_account",
+                "type": "string"
+              },
+              {
+                "name": "amount",
+                "type": "double"
+              },
+              {
+                "name": "currency",
+                "type": "string"
+              },
+              {
+                "name": "payment_type",
+                "type": "string"
+              },
+              {
+                "name": "channel",
+                "type": "string"
+              },
+              {
+                "name": "initiated_at",
+                "type": {
+                  "type": "long",
+                  "logicalType": "timestamp-millis"
+                }
+              },
+              {
+                "name": "status",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "payment_authorization",
+      "connection": "kafka",
+      "topic": "riverflow.payments.authorization",
+      "fork": {
+        "key": {
+          "_gen": "lookup",
+          "name": "payment_initiation",
+          "path": [
+            "value"
+          ]
+        },
+        "oneTimeKeys": true,
+        "stagger": {
+          "ms": 400
+        }
+      },
+      "key": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        }
+      },
+      "value": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        },
+        "customer_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "customer_id"
+          ]
+        },
+        "authorization_code": {
+          "_gen": "string",
+          "expr": "AUTH-#{bothify '??????'}"
+        },
+        "validation_result": "passed",
+        "authorized_at": {
+          "_gen": "now"
+        },
+        "status": "authorized"
+      },
+      "localConfigs": {
+        "maxEvents": 1,
+        "avroSchemaHint": {
+          "key": {
+            "type": "record",
+            "name": "PaymentAuthorizationKey",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              }
+            ]
+          },
+          "value": {
+            "type": "record",
+            "name": "PaymentAuthorization",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              },
+              {
+                "name": "customer_id",
+                "type": "string"
+              },
+              {
+                "name": "authorization_code",
+                "type": "string"
+              },
+              {
+                "name": "validation_result",
+                "type": "string"
+              },
+              {
+                "name": "authorized_at",
+                "type": {
+                  "type": "long",
+                  "logicalType": "timestamp-millis"
+                }
+              },
+              {
+                "name": "status",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "payment_balance_update",
+      "connection": "kafka",
+      "topic": "riverflow.payments.balance_update",
+      "fork": {
+        "key": {
+          "_gen": "lookup",
+          "name": "payment_initiation",
+          "path": [
+            "value"
+          ]
+        },
+        "oneTimeKeys": true,
+        "stagger": {
+          "ms": 800
+        }
+      },
+      "key": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        }
+      },
+      "value": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        },
+        "customer_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "customer_id"
+          ]
+        },
+        "source_account": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "source_account"
+          ]
+        },
+        "destination_account": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "destination_account"
+          ]
+        },
+        "amount": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "amount"
+          ]
+        },
+        "currency": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "currency"
+          ]
+        },
+        "source_balance_after": {
+          "_gen": "uniformDistribution",
+          "bounds": [
+            500,
+            20000
+          ],
+          "decimals": 2
+        },
+        "destination_balance_after": {
+          "_gen": "uniformDistribution",
+          "bounds": [
+            500,
+            20000
+          ],
+          "decimals": 2
+        },
+        "updated_at": {
+          "_gen": "now"
+        },
+        "status": "balance_updated"
+      },
+      "localConfigs": {
+        "maxEvents": 1,
+        "avroSchemaHint": {
+          "key": {
+            "type": "record",
+            "name": "PaymentBalanceUpdateKey",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              }
+            ]
+          },
+          "value": {
+            "type": "record",
+            "name": "PaymentBalanceUpdate",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              },
+              {
+                "name": "customer_id",
+                "type": "string"
+              },
+              {
+                "name": "source_account",
+                "type": "string"
+              },
+              {
+                "name": "destination_account",
+                "type": "string"
+              },
+              {
+                "name": "amount",
+                "type": "double"
+              },
+              {
+                "name": "currency",
+                "type": "string"
+              },
+              {
+                "name": "source_balance_after",
+                "type": "double"
+              },
+              {
+                "name": "destination_balance_after",
+                "type": "double"
+              },
+              {
+                "name": "updated_at",
+                "type": {
+                  "type": "long",
+                  "logicalType": "timestamp-millis"
+                }
+              },
+              {
+                "name": "status",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "payment_status",
+      "connection": "kafka",
+      "topic": "riverflow.payments.status",
+      "fork": {
+        "key": {
+          "_gen": "lookup",
+          "name": "payment_initiation",
+          "path": [
+            "value"
+          ]
+        },
+        "oneTimeKeys": true,
+        "stagger": {
+          "ms": 1200
+        }
+      },
+      "key": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        }
+      },
+      "value": {
+        "payment_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "payment_id"
+          ]
+        },
+        "customer_id": {
+          "_gen": "var",
+          "var": "forkKey",
+          "path": [
+            "customer_id"
+          ]
+        },
+        "status": "completed",
+        "status_reason": "settlement_confirmed",
+        "completed_at": {
+          "_gen": "now"
+        }
+      },
+      "localConfigs": {
+        "maxEvents": 1,
+        "avroSchemaHint": {
+          "key": {
+            "type": "record",
+            "name": "PaymentStatusKey",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              }
+            ]
+          },
+          "value": {
+            "type": "record",
+            "name": "PaymentStatus",
+            "namespace": "riverflow.payments",
+            "fields": [
+              {
+                "name": "payment_id",
+                "type": "string"
+              },
+              {
+                "name": "customer_id",
+                "type": "string"
+              },
+              {
+                "name": "status",
+                "type": "string"
+              },
+              {
+                "name": "status_reason",
+                "type": "string"
+              },
+              {
+                "name": "completed_at",
+                "type": {
+                  "type": "long",
+                  "logicalType": "timestamp-millis"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "schedule": {
+    "stages": [
+      {
+        "generators": [
+          "payment_initiation",
+          "payment_authorization",
+          "payment_balance_update",
+          "payment_status"
+        ]
+      }
+    ]
+  },
+  "connections": {}
+}

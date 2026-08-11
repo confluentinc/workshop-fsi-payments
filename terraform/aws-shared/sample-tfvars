@@ -1,0 +1,14 @@
+# RiverPay aws-shared sample tfvars
+owner_email = "you@confluent.io"
+cloud_region = "us-west-2"
+prefix = "riverpay-shared"
+account_count = 40
+
+# Databricks (shared workspace)
+# databricks_host = "https://dbc-xxxx.cloud.databricks.com"
+# databricks_service_principal_client_id = ""
+# databricks_service_principal_client_secret = ""
+
+enable_risk_api = true
+risk_api_key = "riverpay-workshop-risk"
+enable_shadowtraffic = true

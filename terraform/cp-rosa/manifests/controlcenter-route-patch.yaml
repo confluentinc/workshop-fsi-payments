@@ -1,0 +1,47 @@
+# Optional: expose Control Center via OpenShift route (TLS required).
+# Replace APPS_DOMAIN with your cluster apps domain, e.g. apps.rosa.example.abcd.p1.openshiftapps.com
+# Get domain hint: terraform -chdir=../stage1-rosa output -raw cluster_domain
+#
+# Usage (after Stage 2 base apply):
+#   export APPS_DOMAIN="apps.$(oc get dns cluster -o jsonpath='{.spec.baseDomain}')"
+#   sed "s/APPS_DOMAIN/$${APPS_DOMAIN}/g" controlcenter-route-patch.yaml | oc apply -f -
+#   oc get routes -n confluent
+#   oc get controlcenter controlcenter -n confluent -ojsonpath='{.status.restConfig.externalEndpoint}{"\n"}'
+apiVersion: platform.confluent.io/v1beta1
+kind: ControlCenter
+metadata:
+  name: controlcenter
+  namespace: confluent
+spec:
+  replicas: 1
+  image:
+    application: confluentinc/cp-enterprise-control-center-next-gen:2.2.0
+    init: confluentinc/confluent-init-container:3.1.0
+  dataVolumeCapacity: 10Gi
+  externalAccess:
+    type: route
+    route:
+      domain: APPS_DOMAIN
+      prefix: controlcenter
+  dependencies:
+    schemaRegistry:
+      url: http://schemaregistry.confluent.svc.cluster.local:8081
+    ksqldb:
+      - name: ksqldb
+        url: http://ksqldb.confluent.svc.cluster.local:8088
+    connect:
+      - name: connect
+        url: http://connect.confluent.svc.cluster.local:8083
+    kafka:
+      bootstrapEndpoint: http://kafka.confluent.svc.cluster.local:9071
+    prometheusClient:
+      url: http://controlcenter.confluent.svc.cluster.local:9090
+    alertManagerClient:
+      url: http://controlcenter.confluent.svc.cluster.local:9093
+  services:
+    prometheus:
+      image: confluentinc/cp-enterprise-prometheus:2.2.0
+      pvc:
+        dataVolumeCapacity: 10Gi
+    alertmanager:
+      image: confluentinc/cp-enterprise-alertmanager:2.2.0

@@ -1,0 +1,5 @@
+generated/
+*.pem
+*.env
+*.json
+!connections/.gitkeep

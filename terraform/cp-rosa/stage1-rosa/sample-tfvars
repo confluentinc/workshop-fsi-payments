@@ -1,0 +1,13 @@
+# ===============================
+# Stage 1 — ROSA HCP sample tfvars
+# ===============================
+# Copy to terraform.tfvars and fill in values.
+# Also export: export RHCS_TOKEN="<ocm-offline-token>"
+# Token: https://console.redhat.com/openshift/token/rosa
+
+cluster_name       = "riverpay-cp"   # max 54 chars; lowercase / hyphens
+aws_region         = "us-east-1"
+openshift_version  = "4.16.3"
+# availability_zones_count = 2
+# private = false
+owner_email        = "you@example.com"

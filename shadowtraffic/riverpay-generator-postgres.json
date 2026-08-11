@@ -1,0 +1,279 @@
+{
+  "generators": [
+    {
+      "name": "customer_profiles_seed",
+      "connection": "postgres",
+      "table": "riverpay.customer_profiles",
+      "localConfigs": {
+        "maxEvents": 100,
+        "throttleMs": 0
+      },
+      "row": {
+        "customer_id": {
+          "_gen": "sequentialString",
+          "expr": "CUST-~d",
+          "startingFrom": 100000
+        },
+        "partner_bank_id": {
+          "_gen": "oneOf",
+          "choices": [
+            "BANK-0417",
+            "BANK-0082",
+            "BANK-1103",
+            "BANK-2291",
+            "BANK-3308"
+          ]
+        },
+        "segment": {
+          "_gen": "oneOf",
+          "choices": [
+            "retail",
+            "small_business",
+            "new_partner",
+            "wealth"
+          ]
+        },
+        "account_tier": {
+          "_gen": "oneOf",
+          "choices": [
+            "standard",
+            "premium",
+            "standard",
+            "premium",
+            "standard"
+          ]
+        },
+        "home_currency": "USD",
+        "country": "US",
+        "full_name": {
+          "_gen": "string",
+          "expr": "#{Name.fullName}"
+        },
+        "tax_id": {
+          "_gen": "string",
+          "expr": "#{IdNumber.ssnValid}"
+        },
+        "date_of_birth": {
+          "_gen": "string",
+          "expr": "#{Date.birthday 'yyyy-MM-dd'}"
+        },
+        "created_at": {
+          "_gen": "now"
+        },
+        "updated_at": {
+          "_gen": "now"
+        }
+      }
+    },
+    {
+      "name": "customer_profiles",
+      "connection": "postgres",
+      "table": "riverpay.customer_profiles",
+      "localConfigs": {
+        "throttleMs": 300000
+      },
+      "row": {
+        "customer_id": {
+          "_gen": "sequentialString",
+          "expr": "CUST-~d",
+          "startingFrom": 100100
+        },
+        "partner_bank_id": {
+          "_gen": "oneOf",
+          "choices": [
+            "BANK-0417",
+            "BANK-0082",
+            "BANK-1103",
+            "BANK-2291",
+            "BANK-3308"
+          ]
+        },
+        "segment": {
+          "_gen": "oneOf",
+          "choices": [
+            "retail",
+            "small_business",
+            "new_partner",
+            "wealth"
+          ]
+        },
+        "account_tier": {
+          "_gen": "oneOf",
+          "choices": [
+            "standard",
+            "premium",
+            "standard",
+            "premium",
+            "standard"
+          ]
+        },
+        "home_currency": "USD",
+        "country": "US",
+        "full_name": {
+          "_gen": "string",
+          "expr": "#{Name.fullName}"
+        },
+        "tax_id": {
+          "_gen": "string",
+          "expr": "#{IdNumber.ssnValid}"
+        },
+        "date_of_birth": {
+          "_gen": "string",
+          "expr": "#{Date.birthday 'yyyy-MM-dd'}"
+        },
+        "created_at": {
+          "_gen": "now"
+        },
+        "updated_at": {
+          "_gen": "now"
+        }
+      }
+    },
+    {
+      "name": "fx_rates",
+      "connection": "postgres",
+      "table": "riverpay.fx_rates",
+      "op": "update",
+      "localConfigs": {
+        "throttleMs": 5000
+      },
+      "vars": {
+        "fx": {
+          "_gen": "oneOf",
+          "choices": [
+            {
+              "code": "GBP",
+              "mean": 1.27,
+              "sd": 0.0035
+            },
+            {
+              "code": "AUD",
+              "mean": 0.655,
+              "sd": 0.0025
+            },
+            {
+              "code": "CAD",
+              "mean": 0.735,
+              "sd": 0.0025
+            },
+            {
+              "code": "JPY",
+              "mean": 0.0067,
+              "sd": 4e-05
+            },
+            {
+              "code": "EUR",
+              "mean": 1.085,
+              "sd": 0.0035
+            }
+          ]
+        },
+        "rate_to_usd": {
+          "_gen": "oneOf",
+          "choices": [
+            {
+              "_gen": "normalDistribution",
+              "mean": {
+                "_gen": "var",
+                "var": "fx",
+                "path": [
+                  "mean"
+                ]
+              },
+              "sd": {
+                "_gen": "var",
+                "var": "fx",
+                "path": [
+                  "sd"
+                ]
+              }
+            },
+            {
+              "_gen": "normalDistribution",
+              "mean": {
+                "_gen": "var",
+                "var": "fx",
+                "path": [
+                  "mean"
+                ]
+              },
+              "sd": {
+                "_gen": "var",
+                "var": "fx",
+                "path": [
+                  "sd"
+                ]
+              }
+            },
+            {
+              "_gen": "var",
+              "var": "fx",
+              "path": [
+                "mean"
+              ]
+            }
+          ]
+        }
+      },
+      "where": {
+        "currency_code": {
+          "_gen": "var",
+          "var": "fx",
+          "path": [
+            "code"
+          ]
+        }
+      },
+      "row": {
+        "rate_to_usd": {
+          "_gen": "var",
+          "var": "rate_to_usd"
+        },
+        "updated_at": {
+          "_gen": "now"
+        }
+      }
+    },
+    {
+      "name": "customer_profiles_touch",
+      "connection": "postgres",
+      "table": "riverpay.customer_profiles",
+      "op": "update",
+      "localConfigs": {
+        "throttleMs": 5000
+      },
+      "where": {
+        "customer_id": {
+          "_gen": "lookup",
+          "name": "customer_profiles_seed",
+          "path": [
+            "row",
+            "customer_id"
+          ]
+        }
+      },
+      "row": {
+        "updated_at": {
+          "_gen": "now"
+        }
+      }
+    }
+  ],
+  "schedule": {
+    "stages": [
+      {
+        "generators": [
+          "customer_profiles_seed"
+        ]
+      },
+      {
+        "generators": [
+          "customer_profiles",
+          "customer_profiles_touch",
+          "fx_rates"
+        ]
+      }
+    ]
+  },
+  "connections": {}
+}
