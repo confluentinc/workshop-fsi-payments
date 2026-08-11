@@ -90,7 +90,7 @@ Check the new column in the Databricks **SQL Editor**:
 
 ```sql
 SELECT `payment_id`, `customer_id`, `segment`
-FROM `<catalog>`.`<schema>`.`riverflow_payments`
+FROM `riverflow_payments`
 ORDER BY `completed_at` DESC
 LIMIT 50;
 ```
