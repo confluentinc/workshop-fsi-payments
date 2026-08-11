@@ -35,6 +35,10 @@ RiverPay's partner banks need instant-payments parity, but ops tooling is still 
 
 Expand the accordion below for more background. Otherwise, continue to [Datasets](#-datasets) and [Workshop Labs](#-workshop-labs).
 
+
+If you have any issues with or feedback for this workshop, Please let us know in this [quick 2-minute survey](https://docs.google.com/forms/d/e/1FAIpQLSfoVUqUFTAxHKJop7t8TvfZ4gItQxJ1RaM4oy72DjtK-HWoJg/viewform?usp=pp_url&entry.179681974=FSI+Payments)!
+
+
 <details>
 <summary>Use Case Details</summary>
 
@@ -175,7 +179,17 @@ This workshop supports multiple modes. Choose the path that matches your situati
 
 ## 🏁 Conclusion
 
-Congratulations — you've completed the RiverPay hands-on workshop on real-time payments ops with Confluent and Databricks (or the parallel Confluent Platform on ROSA path).
+Congratulations — you've completed the RiverPay hands-on workshop on real-time payments ops with Confluent and Databricks!
+
+> [!IMPORTANT]
+> **Your Feedback Helps!**
+>
+> Please help us improve this workshop by leaving your feedback in this [quick 2-minute survey](https://docs.google.com/forms/d/e/1FAIpQLSfoVUqUFTAxHKJop7t8TvfZ4gItQxJ1RaM4oy72DjtK-HWoJg/viewform?usp=pp_url&entry.179681974=FSI+Payments)!
+>
+> Thanks!
+
+
+
 
 ## License
 
