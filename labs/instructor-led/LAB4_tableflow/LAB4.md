@@ -40,6 +40,9 @@ Create the Tableflow → Unity Catalog integration yourself:
 
 3. Fill in the service principal fields using the values from the email you received:
 
+> [!NOTE]
+> Use the **client ID** and **client secret** here — not the Databricks email and password you use to log into the workspace.
+
    | Field | Value |
    |-------|-------|
    | Workspace URL | Your Databricks host |
@@ -75,7 +78,7 @@ Enable Tableflow for:
 
 #### 🧩 Enable Tableflow Challenge
 
-In the **[Topic UI](https://confluent.cloud/go/topics)**, find where to enable Tableflow on one of the three topics above, choose **Delta** as the table format, and point it at your catalog integration. Repeat for the other two topics.
+In the **[Topic UI](https://confluent.cloud/go/topics)**, find where to enable Tableflow on one of the three topics above, choose **Delta** as the table format. Repeat for the other two topics.
 
 <img src="./assets/lab4_step2_1.png" alt="Enable Tableflow modal with Iceberg/Delta format choice and storage configuration options" width="400">
 
@@ -107,23 +110,22 @@ Both are in the email you received.
 
    <img src="./assets/lab4_step3_2.png" alt="Databricks left navigation with SQL Editor under the SQL section" width="400">
 
-3. Under **Create new**, click **SQL Query**, then pick your **SQL warehouse** (its ID is in the email).
+3. Under **Create new**, click **SQL Query**.
 
    <img src="./assets/lab4_step3_3.png" alt="SQL Editor landing page with the Create new SQL Query tile" width="500">
 
-4. Run the queries below, replacing `<catalog>` with your **Unity Catalog name** and `<schema>` with your **schema name** — both are in the email too.
+4. Select your **catalog** and **schema** from the dropdowns above the editor — both are in the email too.
+
+5. Run the queries below.
 
 ```sql
-SHOW TABLES IN `<catalog>`.`<schema>`;
-```
-```sql
-SELECT * FROM `<catalog>`.`<schema>`.`riverflow_payments` LIMIT 10;
-```
-```sql
-SELECT * FROM `<catalog>`.`<schema>`.`riverflow_payments_risk_score` LIMIT 10;
-```
-```sql
-SELECT * FROM `<catalog>`.`<schema>`.`riverflow_customer_risk_exposure_24h` LIMIT 10;
+SHOW TABLES;
+
+SELECT * FROM `riverflow_payments` LIMIT 10;
+
+SELECT * FROM `riverflow_payments_risk_score` LIMIT 10;
+
+SELECT * FROM `riverflow_customer_risk_exposure_24h` LIMIT 10;
 ```
 
 <img src="./assets/lab4_step3_4.png" alt="Databricks SQL Editor showing riverflow_customer_risk_exposure_24h rows with customer_id, segment, account_tier, payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
