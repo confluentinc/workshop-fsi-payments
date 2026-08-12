@@ -107,12 +107,23 @@ data "databricks_user" "sso_existing" {
 }
 
 # --- Resource path (WSA) ---
+#
+# ignore_changes on the entitlement attributes: the provider defaults them to
+# false and keeps reconciling them, while databricks_entitlements (below) owns
+# them and sets them true. Without this, a second apply of the same account
+# (e.g. a wsa build retry) diffs the user back to false and strips the
+# entitlements, while databricks_entitlements sees no diff and is skipped — so
+# nothing restores them and the attendee cannot access the workspace.
 
 resource "databricks_user" "workshop" {
   count     = var.lookup_existing_users ? 0 : 1
   provider  = databricks.workspace
   user_name = var.user_email
   force     = true
+
+  lifecycle {
+    ignore_changes = [workspace_access, databricks_sql_access, allow_cluster_create]
+  }
 }
 
 resource "databricks_user" "sso" {
@@ -120,6 +131,10 @@ resource "databricks_user" "sso" {
   provider  = databricks.workspace
   user_name = var.sso_email
   force     = true
+
+  lifecycle {
+    ignore_changes = [workspace_access, databricks_sql_access, allow_cluster_create]
+  }
 }
 
 # --- Unified user IDs ---
