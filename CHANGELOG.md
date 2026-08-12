@@ -1,5 +1,11 @@
 # Change Log
 
+## [v0.2.3] - 2026-08-12
+
+### Fixed
+
+- `terraform/modules/databricks`: `databricks_user` and `databricks_entitlements` both managed the same three entitlements, so any second apply of an account (e.g. a `wsa build` retry) stripped them. The provider defaults `workspace_access` / `databricks_sql_access` / `allow_cluster_create` to `false` on `databricks_user` and keeps reconciling them, so refresh diffed the user back to `false` while `databricks_entitlements` saw no diff and was skipped — leaving nothing to restore them. Terraform still reported success and state still claimed the entitlements were present, so the failure was invisible until an attendee hit "You do not have permission to access this page in workspace …". Both `databricks_user` resources now carry `lifecycle { ignore_changes = [workspace_access, databricks_sql_access, allow_cluster_create] }`, making `databricks_entitlements` the sole owner. Affected 9 of 95 accounts at Elevate APAC 2026 — exactly those that were retried.
+
 ## [v0.2.2] - 2026-08-10
 
 ### Added
