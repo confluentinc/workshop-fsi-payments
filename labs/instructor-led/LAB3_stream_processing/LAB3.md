@@ -169,7 +169,11 @@ FROM `riverflow.payments.initiation` i
 <details>
 <summary>Hint</summary>
 
-Run `DESCRIBE EXTENDED riverflow.payments.initiation` and look for the Watermark.
+Run this command and look for the Watermark: 
+
+```sql
+DESCRIBE EXTENDED `riverflow.payments.initiation`;
+```
 
 `FOR SYSTEM_TIME AS OF` takes its as-of time from the **left** side of the join — the payment being priced, not the rate table — so qualify the column with that table's alias.
 
@@ -177,11 +181,13 @@ Run `DESCRIBE EXTENDED riverflow.payments.initiation` and look for the Watermark
 </details>
 
 > [!NOTE]
-> **Why a materialized table?** A materialized table is a single object that owns both the schema and the query logic that keeps filling it — Flink creates a backing Kafka topic, registers the schema, and runs the query continuously, so new payments land in the table as they happen.
+> **Why a materialized table?** 
+>
+> A materialized table is a single object that owns both the schema and the query logic that keeps filling it — Flink creates a backing Kafka topic, registers the schema, and runs the query continuously, so new payments land in the table as they happen.
 >
 > Because schema and query live together, you can **evolve** them in place: `CREATE OR ALTER MATERIALIZED TABLE` lets you change the query or add a column and Flink migrates the table for you, instead of dropping the table, recreating it, and juggling offsets and downstream consumers.
 >
-> Reference: [Materialized Tables in Confluent Cloud for Apache Flink](https://docs.confluent.io/cloud/current/flink/concepts/materialized-tables.html)
+> *Reference*: [Materialized Tables in Confluent Cloud for Apache Flink](https://docs.confluent.io/cloud/current/flink/concepts/materialized-tables.html)
 
 Query the new table to see what it produced:
 
