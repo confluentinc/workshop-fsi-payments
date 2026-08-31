@@ -61,7 +61,7 @@ The Postgres CDC source connector is **pre-provisioned**. Open **Connectors** an
 > [!TIP]
 > **Plain `SHOW FUNCTIONS;`**
 >
->This lists every built-in function too (hundreds of rows, including operators like `%` and `<=`). `SHOW USER FUNCTIONS;` restricts the output to user-defined functions in the current catalog and database, so the workshop UDF is the only thing you see. For details on one function:
+> This lists every built-in function too (hundreds of rows, including operators like `%` and `<=`). `SHOW USER FUNCTIONS;` restricts the output to user-defined functions in the current catalog and database, so the workshop UDF is the only thing you see. For details on one function:
 >
 > ```sql
 > DESCRIBE FUNCTION EXTENDED lookup_operational_risk;

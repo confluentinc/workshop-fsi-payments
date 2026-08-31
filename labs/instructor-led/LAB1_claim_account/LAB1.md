@@ -32,7 +32,7 @@ You should see a screen that contains all of the inputs that you will need to pr
 >
 > If the form is closed, all accounts are claimed — follow as a spectator or ask the instructor about the next session.
 >
->You should also receive the exact same information in an email within a few minutes.
+> You should also receive the exact same information in an email within a few minutes.
 
 
 ### Step 2: Review credentials

@@ -36,6 +36,6 @@ Failed-payment / DLQ paths, stall-aware state, NSF/fraud branches, and `MATCH_RE
 
 ## Cleanup
 
-Attendees do **not** need to clean up any accounts or infrastucture, as instructors will take care of that after the workshop.
+Attendees do **not** need to clean up any accounts or infrastructure, as instructors will take care of that after the workshop.
 
 Thank you for building out the RiverPay / RiverFlow / RiverPulse solution!

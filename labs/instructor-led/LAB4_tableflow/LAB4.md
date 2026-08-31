@@ -29,7 +29,7 @@ Create the Tableflow → Unity Catalog integration yourself:
 
    <img src="./assets/lab4_step1_1.png" alt="Tableflow environment page with External Catalog Integrations section and Add integration button" width="550">
 
-2. Select integration type **Databricks Unity**, then fill in the integration details:
+3. Select integration type **Databricks Unity**, then fill in the integration details:
 
    | Field | Value |
    |-------|-------|
@@ -39,7 +39,7 @@ Create the Tableflow → Unity Catalog integration yourself:
 
    <img src="./assets/lab4_step1_2.png" alt="Select integration type Databricks Unity and fill in name, supported format, and namespace" width="400">
 
-3. Fill in the service principal fields using the values from the email you received:
+4. Fill in the service principal fields using the values from the email you received:
 
 > [!NOTE]
 > Use the **SP Client ID** and **SP Client Secret** here — not the Databricks email and password you use to log into the workspace.
@@ -52,14 +52,14 @@ Create the Tableflow → Unity Catalog integration yourself:
 
    <img src="./assets/lab4_step1_3.png" alt="Create a service principal form with Workspace URL, Client ID, and Client secret fields" width="550">
 
-4. Copy your **Unity Catalog name** (from the email you received) and paste it into the Confluent Cloud form.
+5. Copy your **Unity Catalog name** (from the email you received) and paste it into the Confluent Cloud form.
 
 > [!TIP]
 > The service principal's Unity Catalog permissions — Data editor + EXTERNAL USE SCHEMA — are pre-granted for instructor-led, so you don't need to set those up yourself.
 
    <img src="./assets/lab4_step1_4.png" alt="Grant Unity Catalog permissions form with Data editor privilege preset and Unity Catalog name field" width="550">
 
-5. Keep the default selections for the remaining screens and complete the wizard to launch the integration
+6. Keep the default selections for the remaining screens and complete the wizard to launch the integration
 
 > [!NOTE]
 > The integration shows **Pending** until Tableflow is enabled on at least one topic — that happens in Step 2.
@@ -111,20 +111,20 @@ Both are in the email you received.
 
 3. Expand to locate your Tableflow-enabled topics-as-tables:
 
-   <img src="./assets/lab4_step3_2.png" alt="Databricks log in page with the Continue with Microsoft Entra ID button" width="400">
+   <img src="./assets/lab4_step3_2.png" alt="Databricks Catalog explorer showing the workshop catalog expanded to Tables (3): riverflow_customer_risk_exposure_24h, riverflow_payments, and riverflow_payments_risk_score" width="400">
 
 
 4. Now open **SQL Editor** from the left nav.
 
    <img src="./assets/lab4_step3_3.png" alt="Databricks left navigation with SQL Editor under the SQL section" width="400">
 
-3. Under **Create new**, click **SQL Query**.
+5. Under **Create new**, click **SQL Query**.
 
    <img src="./assets/lab4_step3_4.png" alt="SQL Editor landing page with the Create new SQL Query tile" width="500">
 
-4. Select your **catalog** and **schema** from the dropdowns above the editor — both are in the email too.
+6. Select your **catalog** and **schema** from the dropdowns above the editor — both are in the email too.
 
-5. Run the queries below.
+7. Run the queries below.
 
 ```sql
 SHOW TABLES;
