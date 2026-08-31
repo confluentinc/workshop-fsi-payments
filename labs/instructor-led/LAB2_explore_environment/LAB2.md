@@ -26,7 +26,7 @@ In [Confluent Cloud](https://confluent.cloud/environments): your environment →
 |-------|------|
 | `riverflow.riverpay.customer_profiles` | CDC profiles (upsert) |
 | `riverflow.riverpay.fx_rates` | CDC FX rates (upsert ~5s) |
-| `riverflow.payments.initiation` | Lifecycle stage 1 |
+| `riverflow.payments.initiation` | Payment lifecycle stage 1 |
 | `riverflow.payments.authorization` | Stage 2 |
 | `riverflow.payments.balance_update` | Stage 3 |
 | `riverflow.payments.status` | Stage 4 |
@@ -39,7 +39,7 @@ The Postgres CDC source connector is **pre-provisioned**. Open **Connectors** an
 
 ### Step 3: Flink compute pool
 
-1. Open **Flink** → **Compute pools**. Pick the workshop pool, **not** the default one. It is named `<team>_flink_compute_pool_<id>` — for example `wp001-tf-db_flink_compute_pool_16255802`, where `wp001` is your team prefix.
+1. Open **Flink** → **Compute pools**. Pick the workshop pool, **not** the default one. It is named `<participant_id>_flink_compute_pool_<id>` — for example `wp001-tf-db_flink_compute_pool_16255802`, where `wp001` is your participant prefix.
 2. Open its **SQL workspace**
 3. Set catalog = your environment, database = your Kafka cluster
 4. Run:
@@ -59,7 +59,9 @@ The Postgres CDC source connector is **pre-provisioned**. Open **Connectors** an
     <img src="./assets/lab2_step3_3.png" alt="SHOW CONNECTIONS result showing riverpay_risk_api" width="550">
 
 > [!TIP]
-> Plain `SHOW FUNCTIONS;` lists every built-in function too (hundreds of rows, including operators like `%` and `<=`). `SHOW USER FUNCTIONS;` restricts the output to user-defined functions in the current catalog and database, so the workshop UDF is the only thing you see. For details on one function:
+> **Plain `SHOW FUNCTIONS;`**
+>
+> This lists every built-in function too (hundreds of rows, including operators like `%` and `<=`). `SHOW USER FUNCTIONS;` restricts the output to user-defined functions in the current catalog and database, so the workshop UDF is the only thing you see. For details on one function:
 >
 > ```sql
 > DESCRIBE FUNCTION EXTENDED lookup_operational_risk;
@@ -76,14 +78,16 @@ In **LAB 3** you'll call this UDF from Flink SQL to build the `riverflow_payment
 Test the function by running:
 
 ```sql
-SELECT lookup_operational_risk(12000, 'retail', 'standard');
+SELECT lookup_operational_risk(3600, 'retail', 'standard');
 -- Expect a string like: 0.42|High amount for retail standard tier
 ```
 
 <img src="./assets/lab2_step3_4.png" alt="SELECT lookup_operational_risk result" width="550">
 
 > [!NOTE]
-> **Cold UDF latency:** the first `lookup_operational_risk(...)` call can take up to ~1 minute (Flink compute warm-up + HTTPS to the shared Risk API). Re-runs are usually much faster. If it hangs past ~2 minutes, check `SHOW CONNECTIONS` again or ask the instructor.
+> **Cold UDF Latency:**
+>
+> The first `lookup_operational_risk(...)` call can take up to ~1 minute (Flink compute warm-up + HTTPS to the shared Risk API). Re-runs are usually much faster. If it hangs past ~2 minutes, check `SHOW CONNECTIONS` again or ask the instructor.
 >
 > Soft-fail payloads use score `0.28` with a reason prefix — not a real API score:
 > `risk_api_endpoint_missing`, `risk_api_http_<code>`, or `risk_api_error` (timeout / network). Healthy low-risk looks like `0.28|routine_instant_credit_transfer`.

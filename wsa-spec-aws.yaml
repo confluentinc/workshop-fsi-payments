@@ -3,19 +3,64 @@
 # Operator guide: docs/operator-instructor-led.md
 # Patterned on wsa-spec-azure.yaml + terraform/aws-shared
 
+# wsa release this spec requires. Required — the spec fails to load without it,
+# and wsa refuses to build/validate on a binary outside the range. Caret on a
+# 0.x floor resolves to >=0.3.0 <0.4.0: pre-1.0, every minor may break, so this
+# caps at the next minor. Bump when the spec adopts a newer wsa feature.
+wsa_version: "^0.3.0"
+
 name: riverpay-fsi-payments-aws
 description: Confluent Cloud + Flink + Tableflow + Databricks — RiverPay instructor-led (AWS)
 cloud: AWS
 
 # Dry-run friendly default; raise for the real event (e.g. 40–95).
+#
+# GOTCHA: this is also the fallback `wsa build` uses when `--accounts` is
+# omitted — including on a `--phases X`-only re-run of an *existing* run-id.
+# It does NOT read build-report.json to see how many accounts that run
+# actually built. Re-running `lifecycle-st` (below) without repeating the
+# same `--accounts` your real build used will silently apply against just
+# these 2 accounts instead of the full set — see the "Re-running a single
+# build phase" note in docs/operator-instructor-led.md.
 account_count: 2
 
-email_pattern: "tmm+wp{N}@confluent.io"
+# email_pattern moved to operator config: set WSA_EMAIL_PATTERN in wsa.env
+# (e.g. WSA_EMAIL_PATTERN=tmm+wp{N}@confluent.io). {email}/{N} tokens below
+# resolve through it.
 
 # terraform_repo: https://github.com/confluentinc/workshop-fsi-payments
-terraform_path: terraform/aws/
 # terraform_ref: main
-shared_infra_path: terraform/aws-shared/
+phases:
+  - name: shared
+    scope: once
+    path: terraform/aws-shared/
+
+  - name: accounts
+    scope: per_account
+    path: terraform/aws/
+
+  # Post-account aggregator: one multi-Kafka lifecycle ShadowTraffic deploy that
+  # needs an output from every account. Off by default; run with --phases lifecycle-st
+  # (auto-runs only when all accounts in the run have built). Replaces the old
+  # scripts/wsa-deploy-lifecycle-st.sh.
+  #
+  # IMPORTANT: when running this phase on its own against an existing run-id,
+  # pass --accounts matching the accounts that run actually built. Without it,
+  # this falls back to account_count above (2), not the real build — see the
+  # GOTCHA note there.
+  - name: lifecycle-st
+    scope: once
+    path: terraform/aws-lifecycle-st/
+    enabled: false                                 # off by default; --phases lifecycle-st to run
+    on_failure: warn                               # a failed aggregator must not fail the build
+    # No enabled_var: the account module always emits lifecycle_st_cluster, and its
+    # enable_lifecycle_shadowtraffic flag gates a *per-attendee* debug container
+    # (st-life-*), which instructor-led keeps off. See docs/operator-instructor-led.md.
+    vars_from:
+      - { phase: shared,   output: postgres_public_ip,            as: ssh_host }
+      - { phase: shared,   output: postgres_ssh_username,         as: ssh_user }
+      - { phase: shared,   output: postgres_ssh_private_key_path, as: ssh_private_key_path }
+      - { phase: accounts, output: lifecycle_st_cluster,          as: clusters }
 
 # Local-copy mode only stages terraform/ by default. Shared + per-attendee
 # resolve ../../services, ../../shadowtraffic, and the UDF JAR — stage them.
@@ -24,8 +69,8 @@ stage_paths:
   - shadowtraffic/
   - udf/riverpay-risk/dist/
 
-# ShadowTraffic: aws-shared deploys profiles+FX → shared Postgres; after accounts,
-# scripts/wsa-deploy-lifecycle-st.sh --cloud aws applies aws-lifecycle-st.
+# ShadowTraffic: aws-shared deploys profiles+FX → shared Postgres; the
+# lifecycle-st phase applies aws-lifecycle-st (one multi-Kafka ST) after accounts.
 
 monitoring:
   enabled: true
@@ -50,6 +95,8 @@ terraform_vars:
   enable_flink_mts: false
   enable_tableflow_topics: false
   enable_risk_udf: true
+  # Gates the optional per-attendee debug ST container (st-life-*); instructor-led
+  # keeps this off and uses the lifecycle-st phase (one multi-Kafka container) instead.
   enable_lifecycle_shadowtraffic: false
   enable_shadowtraffic: false
   enable_risk_api: false

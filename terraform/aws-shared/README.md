@@ -4,8 +4,8 @@ Provisions **once** per workshop run. Patterned on tableflow `aws-shared` + Rive
 `azure-shared` (profiles + FX + Risk API HTTP on the Postgres EC2).
 
 Per-attendee environments: [`../aws/`](../aws/) with `shared_*` from these outputs.
-Lifecycle Kafka traffic: [`../aws-lifecycle-st/`](../aws-lifecycle-st/) via
-[`scripts/wsa-deploy-lifecycle-st.sh`](../../scripts/wsa-deploy-lifecycle-st.sh).
+Lifecycle Kafka traffic: [`../aws-lifecycle-st/`](../aws-lifecycle-st/) via the
+`lifecycle-st` phase in the spec (`wsa build … --phases lifecycle-st`).
 
 ## Owns
 

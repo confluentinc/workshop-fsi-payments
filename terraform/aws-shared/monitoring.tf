@@ -315,6 +315,10 @@ resource "aws_cloudwatch_metric_alarm" "connections_high" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "datagen_unhealthy" {
+  # Only exists when the generator does: collect-metrics pushes
+  # ContainerHealthy_shadowtraffic=0 when the container is absent, so an
+  # always-created alarm would sit in ALARM forever when ShadowTraffic is off.
+  count               = var.enable_shadowtraffic ? 1 : 0
   alarm_name          = "${var.prefix}-shadowtraffic-unhealthy-${local.resource_suffix}"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 2
@@ -326,7 +330,12 @@ resource "aws_cloudwatch_metric_alarm" "datagen_unhealthy" {
   alarm_description   = "ShadowTraffic (profiles+FX) container is unhealthy or stopped for 2+ minutes"
   alarm_actions       = [aws_sns_topic.alerts.arn]
   ok_actions          = [aws_sns_topic.alerts.arn]
-  treat_missing_data  = "breaching"
+  # "missing", not "breaching": this custom metric does not exist during the
+  # boot window, and "breaching" turns that expected absence into a Sev alarm
+  # every build. A real mid-session crash still pages — collect-metrics pushes
+  # an explicit 0 when the container is down but the host is alive. Total
+  # host/pipeline death is covered by the instance_status and cpu alarms.
+  treat_missing_data = "missing"
 
   dimensions = { InstanceId = module.postgres.instance_id }
 
@@ -345,7 +354,12 @@ resource "aws_cloudwatch_metric_alarm" "postgres_down" {
   alarm_description   = "PostgreSQL container is stopped for 2+ minutes"
   alarm_actions       = [aws_sns_topic.alerts.arn]
   ok_actions          = [aws_sns_topic.alerts.arn]
-  treat_missing_data  = "breaching"
+  # "missing", not "breaching": this custom metric does not exist during the
+  # boot window, and "breaching" turns that expected absence into a Sev alarm
+  # every build. A real mid-session crash still pages — collect-metrics pushes
+  # an explicit 0 when the container is down but the host is alive. Total
+  # host/pipeline death is covered by the instance_status and cpu alarms.
+  treat_missing_data = "missing"
 
   dimensions = { InstanceId = module.postgres.instance_id }
 
@@ -557,17 +571,23 @@ resource "aws_cloudwatch_dashboard" "shared_infra" {
         height = 3
         properties = {
           title = "Alarm Status"
-          alarms = [
-            aws_cloudwatch_metric_alarm.cpu_high.arn,
-            aws_cloudwatch_metric_alarm.memory_high.arn,
-            aws_cloudwatch_metric_alarm.disk_high.arn,
-            aws_cloudwatch_metric_alarm.instance_status.arn,
-            aws_cloudwatch_metric_alarm.replication_lag.arn,
-            aws_cloudwatch_metric_alarm.connections_high.arn,
-            aws_cloudwatch_metric_alarm.datagen_unhealthy.arn,
-            aws_cloudwatch_metric_alarm.postgres_down.arn,
-            aws_cloudwatch_metric_alarm.datagen_errors.arn,
-          ]
+          # datagen_unhealthy is now count-gated; the [*] splat yields [] when
+          # it is disabled, so concat drops it cleanly from the widget.
+          alarms = concat(
+            [
+              aws_cloudwatch_metric_alarm.cpu_high.arn,
+              aws_cloudwatch_metric_alarm.memory_high.arn,
+              aws_cloudwatch_metric_alarm.disk_high.arn,
+              aws_cloudwatch_metric_alarm.instance_status.arn,
+              aws_cloudwatch_metric_alarm.replication_lag.arn,
+              aws_cloudwatch_metric_alarm.connections_high.arn,
+            ],
+            aws_cloudwatch_metric_alarm.datagen_unhealthy[*].arn,
+            [
+              aws_cloudwatch_metric_alarm.postgres_down.arn,
+              aws_cloudwatch_metric_alarm.datagen_errors.arn,
+            ],
+          )
         }
       }
     ]

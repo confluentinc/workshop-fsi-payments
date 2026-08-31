@@ -51,7 +51,7 @@ Scratch sources (not authoritative): `tmp/stakeholder_slack_thread.txt`, `tmp/ky
 | **Demo** | `labs/demo/` | `terraform/aws-demo/` | Automated |
 | **Instructor-led Elevate** | `labs/instructor-led/` | `terraform/azure-shared/` + `terraform/azure/` | **Manual** (labs) |
 
-CDC fan-out (instructor-led): shared generators write **Postgres**; **per-attendee CDC** fans out profiles/FX. Lifecycle Kafka events use **one multi-connection ShadowTraffic** (`terraform/*-lifecycle-st`, N Kafka connections × 4 generators) via `scripts/wsa-deploy-lifecycle-st.sh` — not N per-attendee containers.
+CDC fan-out (instructor-led): shared generators write **Postgres**; **per-attendee CDC** fans out profiles/FX. Lifecycle Kafka events use **one multi-connection ShadowTraffic** (`terraform/*-lifecycle-st`, N Kafka connections × 4 generators) via the `lifecycle-st` WSA phase (`wsa build … --phases lifecycle-st`) — not N per-attendee containers.
 
 ---
 
@@ -140,7 +140,7 @@ Requires `az login` on the apply host for `az acr build`.
 - Confluent + Flink + CDC + lifecycle topics; **no** auto Flink MTs / Tableflow (`enable_flink_mts` / `enable_tableflow_topics` forced false).
 - **`module.flink_payments`**: changelog.mode + watermarks on CDC + lifecycle (same as AWS); `enable_risk_udf=false` in-module so Azure-specific CONNECTION/UDF resources stay authoritative.
 - Optional Risk CONNECTION + UDF pre-reg when endpoint + JAR present.
-- **Lifecycle ShadowTraffic** (`shadowtraffic.tf`): optional emergency/debug per-attendee kafka-only ST (`enable_lifecycle_shadowtraffic`, default **false**). Instructor-led uses `terraform/azure-lifecycle-st` + `scripts/wsa-deploy-lifecycle-st.sh` (one multi-Kafka container).
+- **Lifecycle ShadowTraffic** (`shadowtraffic.tf`): optional emergency/debug per-attendee kafka-only ST (`enable_lifecycle_shadowtraffic`, default **false**). Instructor-led uses `terraform/azure-lifecycle-st` via the `lifecycle-st` WSA phase (one multi-Kafka container). Note: the `enable_lifecycle_shadowtraffic` flag gates *this* per-attendee container and is independent of the aggregator phase — the phase reads the always-emitted `lifecycle_st_cluster` output, so it carries no `enabled_var`.
 
 #### Generator split (`shadowtraffic/`)
 
@@ -183,7 +183,6 @@ terraform/aws-shared/       # Instructor-led AWS shared
 terraform/aws-lifecycle-st/ # Multi-cluster lifecycle ST (AWS)
 terraform/azure-lifecycle-st/
 terraform/modules/lifecycle-shadowtraffic/
-scripts/wsa-deploy-lifecycle-st.sh
 wsa-spec-aws.yaml
 docs/operator-instructor-led.md
 terraform/aws-demo/risk-api.tf

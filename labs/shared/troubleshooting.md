@@ -53,17 +53,17 @@ container on the shared Postgres EC2 host (`http://<host>:8089`) — no build/re
 
 ## Instructor-led (Azure / AWS) — ShadowTraffic / CDC fan-out
 
-Cloud-agnostic — `wsa-deploy-lifecycle-st.sh --cloud azure|aws` and the shared VM/EC2
-Docker layout are identical on both clouds; only SSH user (`azureuser` vs `ec2-user`)
+Cloud-agnostic — the `lifecycle-st` phase (`wsa build … --phases lifecycle-st`) and the
+shared VM/EC2 Docker layout are identical on both clouds; only SSH user (`azureuser` vs `ec2-user`)
 and the aggregator root (`terraform/azure-lifecycle-st` vs `terraform/aws-lifecycle-st`) differ.
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | No profiles / FX in shared Postgres | Shared ST not running | SSH shared VM/EC2; `sudo docker ps --filter name=shadowtraffic-riverpay`; check logs |
 | CDC topics empty for one attendee | Connector / include list | Connector **Running**; include `riverpay.customer_profiles,riverpay.fx_rates`; host = shared Postgres IP |
-| Lifecycle topics empty | Multi-cluster lifecycle ST missing | After `wsa build`, run `scripts/wsa-deploy-lifecycle-st.sh apply --cloud azure|aws --run-id …`. On shared host: `sudo docker ps --filter name=shadowtraffic-lifecycle` |
-| Lifecycle ST config errors | Kafka creds / Avro | `sudo docker logs shadowtraffic-lifecycle`; confirm clusters.auto.tfvars.json has bootstrap + SR keys |
-| Leftover `shadowtraffic-lifecycle` after clean | Destroyed shared before lifecycle-st | Destroy with `scripts/wsa-deploy-lifecycle-st.sh destroy --cloud azure|aws` **before** shared; or `sudo docker rm -f shadowtraffic-lifecycle` |
+| Lifecycle topics empty | Multi-cluster lifecycle ST missing | After `wsa build`, run the aggregator: `wsa build -w <spec> --run-id … --phases lifecycle-st`. On shared host: `sudo docker ps --filter name=shadowtraffic-lifecycle` |
+| Lifecycle ST config errors | Kafka creds / Avro | `sudo docker logs shadowtraffic-lifecycle`; confirm `wsa-phase-inputs.auto.tfvars.json` (in the lifecycle-st phase dir) has bootstrap + SR keys |
+| Leftover `shadowtraffic-lifecycle` after clean | Destroyed shared before lifecycle-st | `wsa clean` tears phases down in reverse order (lifecycle-st first); if orphaned: `sudo docker rm -f shadowtraffic-lifecycle` |
 | Legacy `st-life-*` containers | Old per-attendee path | Specs set `enable_lifecycle_shadowtraffic: false`; remove leftovers with `sudo docker rm -f st-life-…` |
 
 ## Terraform / Docker (demo)

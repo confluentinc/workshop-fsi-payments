@@ -4,7 +4,7 @@
 # Elevate fan-out model:
 #   shared ST writes Postgres → per-attendee CDC → each Kafka cluster
 # Lifecycle Kafka traffic: one multi-connection ST via terraform/azure-lifecycle-st
-# (scripts/wsa-deploy-lifecycle-st.sh). Per-attendee st-life-* is emergency/debug only.
+# (the lifecycle-st WSA phase). Per-attendee st-life-* is emergency/debug only.
 
 locals {
   deploy_shadowtraffic    = var.enable_shadowtraffic

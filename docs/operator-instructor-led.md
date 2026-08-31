@@ -9,7 +9,7 @@ Accelerator (`wsa`) and [`labs/instructor-led/`](../labs/instructor-led/).
 | Shared infra (once) | [`terraform/azure-shared/`](../terraform/azure-shared/) | [`terraform/aws-shared/`](../terraform/aws-shared/) |
 | Per-attendee Terraform | [`terraform/azure/`](../terraform/azure/) | [`terraform/aws/`](../terraform/aws/) |
 | Lifecycle ShadowTraffic | [`terraform/azure-lifecycle-st/`](../terraform/azure-lifecycle-st/) | [`terraform/aws-lifecycle-st/`](../terraform/aws-lifecycle-st/) |
-| Post-account glue | [`scripts/wsa-deploy-lifecycle-st.sh`](../scripts/wsa-deploy-lifecycle-st.sh) | same (`--cloud aws`) |
+| Post-account glue | `lifecycle-st` phase in the spec (`--phases lifecycle-st`) | same |
 
 Demo mode (full pipeline automated on AWS) stays on [`terraform/aws-demo/`](../terraform/aws-demo/) + [`labs/demo/`](../labs/demo/) — not this guide.
 
@@ -54,25 +54,41 @@ Profiles/FX use **CDC fan-out** (one Postgres writer → N connectors). Lifecycl
 5. **Databricks** shared workspace + OAuth service principal; External data access enabled
 6. Built UDF JAR at `udf/riverpay-risk/dist/riverpay-risk-udf-1.0.0.jar`
 7. Spec `stage_paths` include `services/risk-api/`, `shadowtraffic/`, `udf/riverpay-risk/dist/`
+8. **`WSA_EMAIL_PATTERN`** set in `wsa.env` (operator config, e.g. `WSA_EMAIL_PATTERN=tmm+wp{N}@confluent.io`) — must contain `{N}`. The specs no longer carry `email_pattern`.
 
 ## Build order
 
 ```bash
-# 1) Shared + N accounts
+# 1) Shared + N accounts (the lifecycle-st phase is enabled: false, so it is skipped here)
 op run --env-file=.env.tpl -- wsa build -w /path/to/workshop-fsi-payments/wsa-spec-azure.yaml
 # or: wsa-spec-aws.yaml
 
 # 2) Multi-cluster lifecycle ShadowTraffic (required for lifecycle topics)
 export WSA_RUN_ID=<run-id from build>
-./scripts/wsa-deploy-lifecycle-st.sh apply --run-id "$WSA_RUN_ID" --cloud azure --auto-approve
-# or: --cloud aws
+op run --env-file=.env.tpl -- wsa build -w /path/to/workshop-fsi-payments/wsa-spec-azure.yaml \
+  --run-id "$WSA_RUN_ID" --phases lifecycle-st
+# or: wsa-spec-aws.yaml
 
 # 3) Dispenser CSV → Google Sheet (after passwords exist in 1Password)
 ./bin/wsa dispenser-upload --sheets-credentials gmail-credentials.json \
   -w /path/to/workshop-fsi-payments/wsa-spec-azure.yaml
 ```
 
-`wsa build` alone does **not** start lifecycle traffic when `enable_lifecycle_shadowtraffic: false`. Always run the aggregator script after a successful account phase.
+`wsa build` alone does **not** start lifecycle traffic — the `lifecycle-st` phase is `enabled: false`. Run it explicitly with `--phases lifecycle-st` after a successful account phase; it reads each account's `lifecycle_st_cluster` output and applies one multi-Kafka container. On a partial build (`--accounts <subset>`) it is skipped with the exact rerun command; run it once the remaining accounts land.
+
+### Re-running a single build phase
+
+> [!IMPORTANT]
+> When you re-run one phase on its own against an existing run — e.g. `wsa build --run-id <id> --phases lifecycle-st` — and **omit `--accounts`**, `wsa` falls back to `account_count` in the spec (the dry-run default of `2`), **not** the number of accounts that run actually built. It does not read `build-report.json` to discover the real set. So a `lifecycle-st` re-run without `--accounts` silently wires the aggregator to just accounts 1–2 and reports success, leaving the rest of the fleet without lifecycle traffic.
+>
+> **Always repeat the same `--accounts` your real build used** on any single-phase re-run:
+>
+> ```bash
+> op run --env-file=.env.tpl -- wsa build -w /path/to/workshop-fsi-payments/wsa-spec-azure.yaml \
+>   --run-id "$WSA_RUN_ID" --phases lifecycle-st --accounts 1-40
+> ```
+>
+> The simplest safe habit for a full event is to set `account_count` in the spec to the real fleet size before building, so the fallback matches reality even if `--accounts` is forgotten.
 
 After dry-runs or rebuilds, use `dispenser-upload` **Overwrite** (or `--yes`) so reviewers are not handed claimed / previously used rows. Prefer a fresh claim for each dry-run reviewer.
 ### Shared-output → per-attendee injection
@@ -91,15 +107,13 @@ WSA prefixes shared Terraform outputs with `shared_` → `TF_VAR_shared_*`.
 ## Teardown order
 
 1. Disable Tableflow topics in each attendee env (WSA `cleanup.disable_tableflow` or UI).
-2. **Destroy lifecycle ST first** (while shared VM SSH still works):
+2. `wsa clean` — phases are destroyed in **reverse** declaration order (`lifecycle-st` → `accounts` → `shared`) automatically, so the aggregator is torn down while the shared VM SSH still works.
 
    ```bash
-   ./scripts/wsa-deploy-lifecycle-st.sh destroy --run-id "$WSA_RUN_ID" --cloud azure --auto-approve
+   op run --env-file=.env.tpl -- wsa clean -w /path/to/workshop-fsi-payments/wsa-spec-azure.yaml --run-id "$WSA_RUN_ID"
    ```
 
-3. `wsa clean` (accounts, then shared).
-
-Do **not** destroy shared before the lifecycle aggregator — the destroy provisioner needs SSH to remove `shadowtraffic-lifecycle`.
+`wsa clean` handles the ordering that the old script's teardown note required — no separate lifecycle-ST destroy step. To scope a teardown, use `--phases <name>` (e.g. `--phases accounts` leaves shared standing for dev iteration). `--accounts-only` / `--shared-only` were removed in the phases cutover.
 
 ## Smoke validation checklist (2 accounts)
 

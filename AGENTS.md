@@ -24,7 +24,6 @@ plus narrative docs under `context/`.
 - `services/risk-api/` — shared Risk Scoring REST API (Flink UDF target)
 - `udf/riverpay-risk/` — Java Flink UDF (`LookupOperationalRisk`); JAR in `dist/`
 - `flink/` / `sql/` — Flink SQL reference + Genie views/prompts
-- `scripts/wsa-deploy-lifecycle-st.sh` — after `wsa build`, apply multi-cluster lifecycle ST
 - `context/` — authoritative narrative content:
   - `fsi_payments_workshop_plan_v2.md` — plan of record
   - `fsi_payments_workshop_phase1_runbook.md` — conceptual build/run/teardown

@@ -1,5 +1,27 @@
 # Change Log
 
+## [v0.3.0] - 2026-08-30
+
+### Changed
+
+- Migrated `wsa-spec-azure.yaml` / `wsa-spec-aws.yaml` to the WSA `phases:` model (the old `terraform_path` + `shared_infra_path` fields no longer load). Each spec now declares three phases: `shared` (once), `accounts` (per_account), and `lifecycle-st` (once, `enabled: false`, `on_failure: warn`). Operator guides (`docs/operator-instructor-led.md`, `docs/operator-azure-elevate.md`), shared troubleshooting, the `*-lifecycle-st` / `aws-shared` READMEs, in-code Terraform comments, and `AGENTS.md` were updated to the phase-based build/teardown flow (`--phases lifecycle-st`; reverse-order `wsa clean`). Added the now-required `wsa_version: "^0.3.0"` field to both specs. Moved `email_pattern` out of the specs to operator config: set `WSA_EMAIL_PATTERN` in `wsa.env`.
+- Instructor-led lab clarity pass (LAB1–LAB6): `[!NOTE]`/`[!TIP]` callouts restructured with bold headers; terminology tightened ("team" → "participant", "Google Form" → "Workshop Account", "blanks" → "placeholders", Databricks "client ID/secret" → "SP Client ID/Secret"); LAB3 adds the rationale for locking the FX rate at initiation and raises preview `LIMIT`s to 20; LAB4 spells out the Databricks catalog / SQL-editor navigation and re-sequences its screenshots; LAB1 adds an account-claim screenshot; LAB6 adds a post-workshop feedback survey link.
+
+### Fixed
+
+- Shared-infra monitoring no longer emits boot-window Sev-1 noise on either cloud 
+- `datagen_unhealthy` is now gated on `enable_shadowtraffic` on both clouds.
+
+### Removed
+
+- `scripts/wsa-deploy-lifecycle-st.sh` — the post-account lifecycle ShadowTraffic deploy is now the `lifecycle-st` phase. Run it with `wsa build … --phases lifecycle-st`; `wsa clean` tears it down first via reverse-order phase teardown.
+
+## [v0.2.3] - 2026-08-12
+
+### Fixed
+
+- `terraform/modules/databricks`: `databricks_user` and `databricks_entitlements` both managed the same three entitlements, so any second apply of an account (e.g. a `wsa build` retry) stripped them. The provider defaults `workspace_access` / `databricks_sql_access` / `allow_cluster_create` to `false` on `databricks_user` and keeps reconciling them, so refresh diffed the user back to `false` while `databricks_entitlements` saw no diff and was skipped — leaving nothing to restore them. Terraform still reported success and state still claimed the entitlements were present, so the failure was invisible until an attendee hit "You do not have permission to access this page in workspace …". Both `databricks_user` resources now carry `lifecycle { ignore_changes = [workspace_access, databricks_sql_access, allow_cluster_create] }`, making `databricks_entitlements` the sole owner. Affected 9 of 95 accounts at Elevate APAC 2026 — exactly those that were retried.
+
 ## [v0.2.2] - 2026-08-10
 
 ### Added

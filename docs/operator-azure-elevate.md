@@ -27,7 +27,7 @@ flowchart LR
   creds --> labs["labs/instructor-led"]
 ```
 
-> Prefer [`docs/operator-instructor-led.md`](operator-instructor-led.md) for the shared Azure+AWS flow (including `scripts/wsa-deploy-lifecycle-st.sh`). This page keeps Azure-specific ACR / Container Apps detail.
+> Prefer [`docs/operator-instructor-led.md`](operator-instructor-led.md) for the shared Azure+AWS flow (including the `lifecycle-st` phase). This page keeps Azure-specific ACR / Container Apps detail.
 
 ## What shared vs per-attendee owns
 
@@ -93,11 +93,12 @@ After shared apply, WSA prefixes shared Terraform outputs with `shared_` and pas
 # Dry-run size is account_count: 2 in the spec — raise for the event
 op run --env-file=.env.tpl -- wsa build -w /path/to/workshop-fsi-payments/wsa-spec-azure.yaml
 
-# Multi-cluster lifecycle ST (required when enable_lifecycle_shadowtraffic: false)
-./scripts/wsa-deploy-lifecycle-st.sh apply --run-id "$WSA_RUN_ID" --cloud azure --auto-approve
+# Multi-cluster lifecycle ST — the lifecycle-st phase (enabled: false); run it explicitly
+op run --env-file=.env.tpl -- wsa build -w /path/to/workshop-fsi-payments/wsa-spec-azure.yaml \
+  --run-id "$WSA_RUN_ID" --phases lifecycle-st
 
-op run --env-file=.env.tpl -- wsa clean -w /path/to/workshop-fsi-payments/wsa-spec-azure.yaml
-# Before clean: destroy lifecycle ST first (see Teardown order)
+# clean destroys phases in reverse order (lifecycle-st → accounts → shared) automatically
+op run --env-file=.env.tpl -- wsa clean -w /path/to/workshop-fsi-payments/wsa-spec-azure.yaml --run-id "$WSA_RUN_ID"
 ```
 
 Ensure the operator host can run **`az acr build`** (Azure CLI logged in as the same SP/subscription) before shared apply.
@@ -137,7 +138,7 @@ Before a large event:
 
 - [ ] CDC topics `riverflow.riverpay.customer_profiles` and `riverflow.riverpay.fx_rates` have data
 - [ ] Lifecycle topics receive initiation → status traffic
-- [ ] One multi-cluster ST container: `shadowtraffic-lifecycle` (after `wsa-deploy-lifecycle-st.sh`)
+- [ ] One multi-cluster ST container: `shadowtraffic-lifecycle` (after `--phases lifecycle-st`)
 - [ ] Flink: `SHOW CONNECTIONS` includes `riverpay_risk_api`; `lookup_operational_risk` exists
 - [ ] Credentials CSV includes every field in the spec `credentials` block
 
@@ -152,9 +153,7 @@ Before a large event:
 ## Teardown order
 
 1. Disable Tableflow topics in each attendee env (WSA `cleanup.disable_tableflow` or UI).
-2. Destroy lifecycle ST: `./scripts/wsa-deploy-lifecycle-st.sh destroy --run-id "$WSA_RUN_ID" --cloud azure --auto-approve`
-3. Destroy per-attendee stacks (`wsa clean` or `terraform destroy` in `azure/`).
-4. Destroy `azure-shared` last (Risk API, shared ST, Postgres, ACR).
+2. `wsa clean` destroys phases in **reverse** declaration order automatically: `lifecycle-st` first (while shared VM SSH still works), then `accounts` (per-attendee stacks), then `azure-shared` last (Risk API, shared ST, Postgres, ACR). No separate lifecycle-ST destroy step.
 
 ## Sizing and cost
 

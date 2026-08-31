@@ -3,7 +3,7 @@
 # ===============================
 # Emergency/debug only: runs a kafka-only generator on the shared Postgres
 # EC2 (Docker). Instructor-led defaults this off — use terraform/aws-lifecycle-st
-# (scripts/wsa-deploy-lifecycle-st.sh) for the normal multi-cluster path.
+# (the lifecycle-st WSA phase) for the normal multi-cluster path.
 # Profiles/FX stay on the shared ST instance from aws-shared.
 
 locals {

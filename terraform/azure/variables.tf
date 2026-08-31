@@ -315,7 +315,7 @@ variable "shared_postgres_ssh_username" {
 }
 
 variable "enable_lifecycle_shadowtraffic" {
-  description = "Emergency/debug only: per-attendee kafka-only ST on shared VM. Instructor-led defaults to false — use terraform/azure-lifecycle-st (scripts/wsa-deploy-lifecycle-st.sh)."
+  description = "Emergency/debug only: per-attendee kafka-only ST on shared VM. Instructor-led defaults to false — use terraform/azure-lifecycle-st (the lifecycle-st WSA phase)."
   type        = bool
   default     = false
 }

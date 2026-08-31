@@ -85,7 +85,7 @@ In a batch world this is a change request: a ticket, a backfill, a new table, an
 
 #### 🧩 Schema Evolution Challenge
 
-Two blanks are left in the statement below. Fill in the **column** to add to the product, and the **table to join** for it — the same reference data you looked up in LAB 3.
+Two placeholders are in the statement below. Fill in the **column** to add to the product, and the **table to join** for it — the same reference data you looked up in LAB 3.
 
 Go back to your **[Flink SQL workspace](https://confluent.cloud/go/flink)** and run:
 
@@ -160,7 +160,11 @@ Break down completed payments by customer segment: how many payments and what is
 <img src="./assets/lab5_step3_2.png" alt="Genie answer breaking completed payments down by customer segment with payment counts and total USD value per segment" width="800">
 
 > [!TIP]
-> **Why this matters commercially.** Two properties made that a five-minute change instead of a project. The column was **added**, not moved or renamed — existing consumers keep reading the table exactly as before, so nothing had to be coordinated or re-tested. And the profile lookup is a `LEFT JOIN`, so a payment with no matching profile still appears; the table's meaning — every completed payment — is unchanged. Evolving a live data product is a normal Tuesday, not a migration.
+> **Why this matters commercially.**
+>
+> Two properties made that a five-minute change instead of a project. The column was **added**, not moved or renamed — existing consumers keep reading the table exactly as before, so nothing had to be coordinated or re-tested. 
+>
+> And the profile lookup is a `LEFT JOIN`, so a payment with no matching profile still appears; the table's meaning — every completed payment — is unchanged. Evolving a live data product is a normal Tuesday, not a migration.
 
 > [!NOTE]
 > Payments that completed **before** you ran this show `NULL` for `segment` — the column is added going forward, not backfilled onto history. Sorting by `completed_at DESC` shows the populated rows first. If your team needs the full history filled in, that's a separate backfill job.
