@@ -18,11 +18,14 @@
 Completed **[LAB 2](../LAB2_explore_environment/LAB2.md)**. Flink SQL workspace open with correct catalog/database.
 
 > [!TIP]
-> Create several empty cells before you start. Prefer `CREATE OR ALTER MATERIALIZED TABLE` so re-runs are safe.
+> **Confluent Flink SQL Basic Tips**
+>
+> 1. Create several empty cells before you start.
+> 2. Prefer materialized tables (i.e. `CREATE OR ALTER MATERIALIZED TABLE`) so re-runs are safe.
 
 ## Steps
 
-### Step 1: Peek at sources
+### Step 1: Review data sources
 
 ```sql
 SELECT * FROM `riverflow.riverpay.customer_profiles` LIMIT 5;
@@ -47,7 +50,9 @@ SELECT * FROM `riverflow.payments.initiation` LIMIT 5;
 
 ### Step 2: Confirm changelog modes / watermarks
 
-The joins you write in Step 3 only work if the source tables are set up correctly — reference data (profiles, FX rates) has to be keyed and updatable, payment events have to stay as a plain stream, and every table needs a timestamp Flink can order by. That's already done for you. Run `SHOW CREATE TABLE` on both reference tables below and confirm each one reports `'changelog.mode' = 'upsert'`:
+The joins you write in Step 3 only work if the source tables are set up correctly — reference data (profiles, FX rates) has to be keyed and updatable, payment events have to stay as a plain stream, and every table needs a timestamp Flink can order by.
+
+That's already done for you. Run `SHOW CREATE TABLE` on both reference tables below and confirm each one reports `'changelog.mode' = 'upsert'`:
 
 ```sql
 SHOW CREATE TABLE `riverflow.riverpay.customer_profiles`;
@@ -60,7 +65,11 @@ SHOW CREATE TABLE `riverflow.riverpay.fx_rates`;
 ```
 
 > [!NOTE]
-> Profiles and FX rates are **upsert** because they're mutable reference data keyed by `customer_id` / `currency_code` — each new value replaces the old one, giving the temporal join a well-defined "current value per key" to look up. Lifecycle topics are **append** because each stage happens once per `payment_id`, so there's nothing to overwrite.
+> **Upsert Changelog Mode**
+>
+> Profiles and FX rates are **upsert** because they're mutable reference data keyed by `customer_id` / `currency_code` — each new value replaces the old one, giving the temporal join a well-defined "current value per key" to look up.
+>
+> Lifecycle topics are **append** because each stage happens once per `payment_id`, so there's nothing to overwrite.
 
 <details>
 <summary>Fallback — only if SHOW CREATE looks incomplete</summary>
@@ -123,13 +132,19 @@ ALTER TABLE `riverflow.payments.status`
 
 ### Step 3: Completed payments + FX conversion
 
-A payment arrives as four separate events, one per topic — `initiation` (started), `authorization` (approved), `balance_update` (money moved), `status` (final outcome). Here you stitch those four back into one row per payment, and convert the amount to USD. The conversion uses a **[temporal join](https://docs.confluent.io/cloud/current/flink/reference/queries/joins.html#temporal-joins)** (`FOR SYSTEM_TIME AS OF`) to look up the FX rate as it stood at the moment the payment was initiated, rather than the rate right now — so a payment is always priced at the rate it actually got. A row appears only once all four stages have arrived, so this table is your list of genuinely completed payments.
+A payment arrives as four separate events, one per topic — `initiation` (started), `authorization` (approved), `balance_update` (money moved), `status` (final outcome). 
+
+Here you stitch those four back into one row per payment, and convert the amount to USD. The conversion uses a **[temporal join](https://docs.confluent.io/cloud/current/flink/reference/queries/joins.html#temporal-joins)** (`FOR SYSTEM_TIME AS OF`) to look up the FX rate as it stood at the moment the payment was initiated, rather than the rate right now — so a payment is always priced at the rate it actually got.
+
+The rate has to be locked at **initiation**, not authorization or settlement — that's the moment the customer was quoted the converted amount. Pricing off a later stage would settle the payment at a different rate than what the customer saw.
+
+A row appears only once all four stages have arrived, so this table is your list of genuinely completed payments.
 
 <img src="./assets/lab3_step3_1.png" alt="Pipeline diagram highlighting the lifecycle topics through Flink Temporal Table Join to Completed Payments" width="800">
 
 #### 🧩 Temporal Join Challenge
 
-Two blanks are left in the `JOIN` line below. Fill in the **FX rates table** to join against (Step 1 showed its rows) and the **watermark column** to join as-of (Step 2 confirmed it on every source table).
+There are two *placeholders* in the `JOIN` line below. Replace them by filling in the **FX rates table** to join against (Step 1 above showed its rows) and the **watermark column** to join as-of (Step 2 confirmed it on every source table).
 
 
 ```sql
@@ -186,7 +201,7 @@ Run `DESCRIBE EXTENDED riverflow.payments.initiation` and look for the Watermark
 Query the new table to see what it produced:
 
 ```sql
-SELECT * FROM `riverflow_payments` LIMIT 10;
+SELECT * FROM `riverflow_payments` LIMIT 20;
 ```
 
 <img src="./assets/lab3_step3_2.png" alt="SELECT * FROM riverflow_payments result showing currency, rate_to_usd, and amount_usd columns" width="800">
@@ -204,7 +219,7 @@ The API's thresholds are absolute dollar figures, so the amount you pass has to 
 
 #### 🧩 Risk UDF Challenge
 
-Two blanks are left in the `lookup_operational_risk(...)` call below. Fill in the **segment** and **account_tier** arguments — both come from the customer profile.
+Two placeholder values exist in the `lookup_operational_risk(...)` call below. Fill in the **segment** and **account_tier** arguments — both come from the customer profile.
 
 ```sql
 SET 'client.statement-name' = 'riverflow-payments-risk-score';
@@ -251,7 +266,7 @@ FROM (
 Query the new table to see what it produced:
 
 ```sql
-SELECT * FROM `riverflow_payments_risk_score` LIMIT 10;
+SELECT * FROM `riverflow_payments_risk_score` LIMIT 20;
 ```
 
 <img src="./assets/lab3_step4_2.png" alt="SELECT * FROM riverflow_payments_risk_score result showing segment, account_tier, risk_score, and risk_reason columns" width="800">
@@ -306,7 +321,9 @@ SELECT * FROM `riverflow_customer_risk_exposure_24h`;
 <img src="./assets/lab3_step5_2.png" alt="Query result showing one row per customer with payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
 
 > [!TIP]
-> One row per customer: 100 customers, 100 rows. Each row summarizes the payments that each customer made in the last 24 hours, and it updates in place with a fresh exposure figure every time they initiate another one.
+> **One Row Per Customer**
+>
+> 100 customers, 100 rows. Each row summarizes the payments that each customer made in the last 24 hours, and it updates in place with a fresh exposure figure every time they initiate another one.
 >
 > Sort by `avg_risk_score` and you have Dana's worklist — the customers her team should look at first, current as of seconds ago.
 

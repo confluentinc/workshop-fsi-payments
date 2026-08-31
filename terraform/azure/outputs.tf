@@ -79,7 +79,8 @@ output "confluent_schema_registry_endpoint" {
   value       = module.confluent_platform.schema_registry_endpoint
 }
 
-# Lifecycle multi-cluster ST aggregator (scripts/wsa-deploy-lifecycle-st.sh)
+# Lifecycle multi-cluster ST aggregator (consumed by the lifecycle-st WSA phase
+# via vars_from → terraform/azure-lifecycle-st). Always emitted.
 output "lifecycle_st_cluster" {
   description = "Cluster credentials for instructor-led multi-connection lifecycle ShadowTraffic"
   sensitive   = true

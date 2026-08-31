@@ -24,7 +24,8 @@ Completed **[LAB 3](../LAB3_stream_processing/LAB3.md)** with all three material
 
 Create the Tableflow → Unity Catalog integration yourself:
 
-1. Open **[Tableflow](https://confluent.cloud/go/tableflow)** → **External Catalog Integrations** → **+ Add integration**
+1. Navigate to your Kafka cluster
+2. Open **[Tableflow](https://confluent.cloud/go/tableflow)** → **External Catalog Integrations** → **+ Add integration**
 
    <img src="./assets/lab4_step1_1.png" alt="Tableflow environment page with External Catalog Integrations section and Add integration button" width="550">
 
@@ -41,7 +42,7 @@ Create the Tableflow → Unity Catalog integration yourself:
 3. Fill in the service principal fields using the values from the email you received:
 
 > [!NOTE]
-> Use the **client ID** and **client secret** here — not the Databricks email and password you use to log into the workspace.
+> Use the **SP Client ID** and **SP Client Secret** here — not the Databricks email and password you use to log into the workspace.
 
    | Field | Value |
    |-------|-------|
@@ -58,7 +59,7 @@ Create the Tableflow → Unity Catalog integration yourself:
 
    <img src="./assets/lab4_step1_4.png" alt="Grant Unity Catalog permissions form with Data editor privilege preset and Unity Catalog name field" width="550">
 
-5. Follow the wizard to launch the integration
+5. Keep the default selections for the remaining screens and complete the wizard to launch the integration
 
 > [!NOTE]
 > The integration shows **Pending** until Tableflow is enabled on at least one topic — that happens in Step 2.
@@ -106,13 +107,20 @@ Both are in the email you received.
 > [!NOTE]
 > If you see a transient **403**, refresh the page.
 
-2. Confirm you land on the workspace home, then open **SQL Editor** from the left nav.
+2. Confirm you land on the workspace home, then click on the **Catalog** link in the left navigation panel.
 
-   <img src="./assets/lab4_step3_2.png" alt="Databricks left navigation with SQL Editor under the SQL section" width="400">
+3. Expand to locate your Tableflow-enabled topics-as-tables:
+
+   <img src="./assets/lab4_step3_2.png" alt="Databricks log in page with the Continue with Microsoft Entra ID button" width="400">
+
+
+4. Now open **SQL Editor** from the left nav.
+
+   <img src="./assets/lab4_step3_3.png" alt="Databricks left navigation with SQL Editor under the SQL section" width="400">
 
 3. Under **Create new**, click **SQL Query**.
 
-   <img src="./assets/lab4_step3_3.png" alt="SQL Editor landing page with the Create new SQL Query tile" width="500">
+   <img src="./assets/lab4_step3_4.png" alt="SQL Editor landing page with the Create new SQL Query tile" width="500">
 
 4. Select your **catalog** and **schema** from the dropdowns above the editor — both are in the email too.
 
@@ -131,7 +139,7 @@ SELECT * FROM `riverflow_customer_risk_exposure_24h` LIMIT 10;
 > [!NOTE]
 > The first run may ask you to select a warehouse, and to start it if it's stopped. Pick the warehouse in your workspace and start it — it comes up in a few seconds, then the query runs.
 
-<img src="./assets/lab4_step3_4.png" alt="Databricks SQL Editor showing riverflow_customer_risk_exposure_24h rows with customer_id, segment, account_tier, payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
+<img src="./assets/lab4_step3_5.png" alt="Databricks SQL Editor showing riverflow_customer_risk_exposure_24h rows with customer_id, segment, account_tier, payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
 
 > [!TIP]
 > Same rows you built in Flink, now queryable in Databricks — no pipeline, no copy job. Tableflow published the Kafka topic straight into Unity Catalog as a Delta table.

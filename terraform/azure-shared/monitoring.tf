@@ -15,8 +15,8 @@
 #   - Azure Portal dashboard
 
 locals {
-  effective_alert_email  = coalesce(var.alert_email, var.owner_email)
-  dashboard_name         = "wsa-shared-infra-${local.resource_suffix}"
+  effective_alert_email   = coalesce(var.alert_email, var.owner_email)
+  dashboard_name          = "wsa-shared-infra-${local.resource_suffix}"
   custom_metric_namespace = "WSA/SharedInfra"
 }
 
@@ -87,6 +87,12 @@ resource "azurerm_monitor_metric_alert" "vm_availability" {
   severity            = 1
   frequency           = "PT1M"
   window_size         = "PT5M"
+
+  # Create the rule only once PostgreSQL is serving (monitoring_setup blocks on
+  # readiness). Azure metric alerts evaluate forward from creation, not over
+  # data that predates the rule, so a late-created rule never fires on the boot
+  # window — while PT1M/PT5M keeps mid-session detection fast.
+  depends_on = [null_resource.monitoring_setup]
 
   criteria {
     metric_namespace = "Microsoft.Compute/virtualMachines"
@@ -216,7 +222,10 @@ resource "azurerm_monitor_metric_alert" "connections_high" {
 }
 
 resource "azurerm_monitor_metric_alert" "datagen_unhealthy" {
-  count               = var.enable_monitoring ? 1 : 0
+  # Gate on the generator toggle too: collect-metrics pushes ContainerHealthy=0
+  # when the container is absent, so without this the alert fires forever when
+  # ShadowTraffic is disabled but monitoring is on.
+  count               = var.enable_monitoring && var.enable_shadowtraffic ? 1 : 0
   name                = "${var.prefix}-datagen-unhealthy-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
@@ -224,6 +233,12 @@ resource "azurerm_monitor_metric_alert" "datagen_unhealthy" {
   severity            = 1
   frequency           = "PT1M"
   window_size         = "PT5M"
+
+  # ShadowTraffic starts on a later timeline than Postgres: shadowtraffic_deploy
+  # first waits for Postgres, then pulls and starts the container. Gating on both
+  # means this rule is created only once ST is actually running, not while it is
+  # still being pulled — the boot window that produced the datagen Sev-1 noise.
+  depends_on = [null_resource.monitoring_setup, null_resource.shadowtraffic_deploy]
 
   criteria {
     metric_namespace       = local.custom_metric_namespace
@@ -250,6 +265,11 @@ resource "azurerm_monitor_metric_alert" "postgres_down" {
   severity            = 1
   frequency           = "PT1M"
   window_size         = "PT5M"
+
+  # See vm_availability: created only after PostgreSQL is serving and the
+  # metrics cron has pushed its first ContainerRunning_postgres=1 sample, so the
+  # rule never sees the boot window when the container reads "down".
+  depends_on = [null_resource.monitoring_setup]
 
   criteria {
     metric_namespace       = local.custom_metric_namespace
@@ -346,6 +366,25 @@ resource "null_resource" "monitoring_setup" {
       echo '================================================'
       echo 'Monitoring Setup'
       echo '================================================'
+
+      # Block until PostgreSQL is actually serving before finishing this
+      # resource. The Sev-1 alert rules depend_on it, so gating here keeps them
+      # from being created — and evaluating — while cloud-init is still
+      # installing Docker/Postgres. Without this gate every build emits a
+      # boot-window Sev-1 transient that self-resolves minutes later. Mirrors
+      # the readiness loop in cloud-init.sh.tpl (up to ~10 min).
+      echo 'Waiting for PostgreSQL to accept connections...'
+      for i in $(seq 1 60); do
+        if sudo docker exec postgres-workshop pg_isready -U ${var.postgres_db_username} >/dev/null 2>&1; then
+          echo "PostgreSQL is ready."
+          break
+        fi
+        if [ "$i" -eq 60 ]; then
+          echo 'PostgreSQL did not become ready within 10 minutes' >&2
+          exit 1
+        fi
+        sleep 10
+      done
 
       # Install dependencies
       echo 'Installing monitoring dependencies...'

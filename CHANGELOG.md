@@ -1,5 +1,21 @@
 # Change Log
 
+## [v0.3.0] - 2026-08-30
+
+### Changed
+
+- Migrated `wsa-spec-azure.yaml` / `wsa-spec-aws.yaml` to the WSA `phases:` model (the old `terraform_path` + `shared_infra_path` fields no longer load). Each spec now declares three phases: `shared` (once), `accounts` (per_account), and `lifecycle-st` (once, `enabled: false`, `on_failure: warn`). Operator guides (`docs/operator-instructor-led.md`, `docs/operator-azure-elevate.md`), shared troubleshooting, the `*-lifecycle-st` / `aws-shared` READMEs, in-code Terraform comments, and `AGENTS.md` were updated to the phase-based build/teardown flow (`--phases lifecycle-st`; reverse-order `wsa clean`). Added the now-required `wsa_version: "^0.3.0"` field to both specs. Moved `email_pattern` out of the specs to operator config: set `WSA_EMAIL_PATTERN` in `wsa.env`.
+- Instructor-led lab clarity pass (LAB1–LAB6): `[!NOTE]`/`[!TIP]` callouts restructured with bold headers; terminology tightened ("team" → "participant", "Google Form" → "Workshop Account", "blanks" → "placeholders", Databricks "client ID/secret" → "SP Client ID/Secret"); LAB3 adds the rationale for locking the FX rate at initiation and raises preview `LIMIT`s to 20; LAB4 spells out the Databricks catalog / SQL-editor navigation and re-sequences its screenshots; LAB1 adds an account-claim screenshot; LAB6 adds a post-workshop feedback survey link.
+
+### Fixed
+
+- Shared-infra monitoring no longer emits boot-window Sev-1 noise on either cloud 
+- `datagen_unhealthy` is now gated on `enable_shadowtraffic` on both clouds.
+
+### Removed
+
+- `scripts/wsa-deploy-lifecycle-st.sh` — the post-account lifecycle ShadowTraffic deploy is now the `lifecycle-st` phase. Run it with `wsa build … --phases lifecycle-st`; `wsa clean` tears it down first via reverse-order phase teardown.
+
 ## [v0.2.3] - 2026-08-12
 
 ### Fixed

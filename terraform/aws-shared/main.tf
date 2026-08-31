@@ -1,14 +1,15 @@
 # ===============================
 # Shared Workshop Infrastructure
 # ===============================
-# Runs ONCE before `wsa build`. Provisions resources shared across all
-# 95 workshop accounts: VPC, S3, SSH keypair, and PostgreSQL.
+# The `shared` (scope: once) phase of `wsa build` — runs before the per-account
+# phase. Provisions resources shared across all 95 workshop accounts: VPC, S3,
+# SSH keypair, and PostgreSQL.
 #
 # Per-account Terraform (terraform/aws/) receives these outputs as
 # input variables (shared_vpc_id, shared_s3_bucket_arn, etc.).
 #
-# Usage (via wsa):
-#   wsa build --shared-infra terraform/aws-shared/ ...
+# Usage (via wsa): declared as the `shared` phase in wsa-spec-aws.yaml.
+#   wsa build -w wsa-spec-aws.yaml ...
 #
 # Usage (manual):
 #   cd terraform/aws-shared

@@ -5,8 +5,9 @@ Does **not** create Kafka — only renders N Kafka connections × 4 generators a
 deploys `shadowtraffic-lifecycle` on the shared Postgres VM.
 
 ```bash
-# After wsa build:
-./scripts/wsa-deploy-lifecycle-st.sh apply --run-id "$WSA_RUN_ID" --cloud azure --auto-approve
+# After wsa build (this is the lifecycle-st phase, enabled: false by default):
+op run --env-file=.env.tpl -- wsa build -w /path/to/workshop-fsi-payments/wsa-spec-azure.yaml \
+  --run-id "$WSA_RUN_ID" --phases lifecycle-st
 ```
 
 See [`docs/operator-instructor-led.md`](../../docs/operator-instructor-led.md).

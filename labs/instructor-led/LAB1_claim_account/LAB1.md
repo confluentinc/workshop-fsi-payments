@@ -19,14 +19,21 @@ Welcome to the RiverPay workshop. Your instructor has pre-provisioned Confluent 
 
 ### Step 1: Claim your account
 
-1. Open the **Google Form** link from your instructor
+1. Open the **Workshop Account** link from your instructor
 2. Enter your **name** and **email**
 3. Submit
 
-You should receive credentials within a few minutes.
+You should see a screen that contains all of the inputs that you will need to progress through and complete this workshop.
+
+![Account values page](./assets/account_claim_success.png)
 
 > [!NOTE]
-> If the form is closed, all accounts are claimed — follow as a spectator or ask the instructor about the next session. Check spam if email is delayed.
+> **Account Claiming**
+>
+> If the form is closed, all accounts are claimed — follow as a spectator or ask the instructor about the next session.
+>
+>You should also receive the exact same information in an email within a few minutes.
+
 
 ### Step 2: Review credentials
 

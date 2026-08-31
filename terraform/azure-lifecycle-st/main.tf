@@ -1,9 +1,9 @@
 # ===============================
 # Azure instructor-led: multi-cluster lifecycle ShadowTraffic
 # ===============================
-# Does NOT create Kafka. After wsa build (or manual account applies), collect
-# each account's lifecycle_st_cluster output + shared SSH, then apply this root.
-# See scripts/wsa-deploy-lifecycle-st.sh
+# Does NOT create Kafka. The lifecycle-st WSA phase collects each account's
+# lifecycle_st_cluster output + shared SSH (via vars_from) and applies this root.
+# Run: wsa build -w wsa-spec-azure.yaml --run-id <id> --phases lifecycle-st
 
 module "lifecycle_st" {
   source = "../modules/lifecycle-shadowtraffic"

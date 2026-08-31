@@ -1,14 +1,15 @@
 # ===============================
 # Shared Workshop Infrastructure (Azure)
 # ===============================
-# Runs ONCE before `wsa build`. Provisions resources shared across all
-# workshop accounts: Resource Group, VNet, Storage Account, SSH key,
-# and an Azure VM running PostgreSQL + the data generator via Docker.
+# The `shared` (scope: once) phase of `wsa build` — runs before the per-account
+# phase. Provisions resources shared across all workshop accounts: Resource
+# Group, VNet, Storage Account, SSH key, and an Azure VM running PostgreSQL +
+# the data generator via Docker.
 #
 # Per-account Terraform (terraform/azure/) receives these outputs as
 # input variables (shared_resource_group_name, shared_storage_account_name, etc.).
 #
-# Usage (via wsa):
+# Usage (via wsa): declared as the `shared` phase in wsa-spec-azure.yaml.
 #   wsa build -w wsa-spec-azure.yaml ...
 #
 # Usage (manual):
