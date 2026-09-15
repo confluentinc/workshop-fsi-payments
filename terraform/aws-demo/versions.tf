@@ -12,11 +12,11 @@ terraform {
     }
     databricks = {
       source  = "databricks/databricks"
-      version = "~> 1.79.1"
+      version = "~> 1.131.0"
     }
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.98.0"
+      version = "~> 5.100.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -40,7 +40,7 @@ terraform {
     }
     http = {
       source  = "hashicorp/http"
-      version = "~> 3.4.0"
+      version = "~> 3.6.0"
     }
   }
 }
