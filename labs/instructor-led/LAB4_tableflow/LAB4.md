@@ -122,7 +122,9 @@ Both are in the email you received.
 
    <img src="./assets/lab4_step3_4.png" alt="SQL Editor landing page with the Create new SQL Query tile" width="500">
 
-6. Select your **catalog** and **schema** from the dropdowns above the editor — both are in the email too.
+6. Select your **catalog** and **schema** from the dropdowns above the editor — both are in the email too. The catalog is prefixed with `wp`, the schema with `lkc`.
+
+   <img src="./assets/lab4_step3_5.png" alt="SQL Editor toolbar showing the catalog dropdown (wp001-tf-db-...) and schema dropdown (lkc-k8j3r0p)" width="500">
 
 7. Run the queries below.
 
@@ -137,9 +139,9 @@ SELECT * FROM `riverflow_customer_risk_exposure_24h` LIMIT 10;
 ```
 
 > [!NOTE]
-> The first run may ask you to select a warehouse, and to start it if it's stopped. Pick the warehouse in your workspace and start it — it comes up in a few seconds, then the query runs.
+> The first run may ask you to select a warehouse, and to start it if it's stopped. Pick the **Serverless Warehouse** and start it — it comes up in a few seconds, then the query runs.
 
-<img src="./assets/lab4_step3_5.png" alt="Databricks SQL Editor showing riverflow_customer_risk_exposure_24h rows with customer_id, segment, account_tier, payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
+<img src="./assets/lab4_step3_6.png" alt="Databricks SQL Editor showing riverflow_customer_risk_exposure_24h rows with customer_id, segment, account_tier, payment_count, avg_risk_score, max_risk_score, and updated_at" width="800">
 
 > [!TIP]
 > Same rows you built in Flink, now queryable in Databricks — no pipeline, no copy job. Tableflow published the Kafka topic straight into Unity Catalog as a Delta table.
