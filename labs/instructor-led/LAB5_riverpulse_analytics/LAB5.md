@@ -151,6 +151,9 @@ LIMIT 50;
 
 <img src="./assets/lab5_step3_1.png" alt="Databricks SQL Editor showing riverflow_payments with the new segment column populated for recent payments" width="450">
 
+> [!NOTE]
+> `segment` is expected to be `NULL` on the first try — those are old events from before the schema change. Re-run the query and rows will start filling in as new payments complete.
+
 Now go back to Genie and ask the question that failed a minute ago:
 
 ```text
