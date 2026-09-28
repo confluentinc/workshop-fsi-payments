@@ -14,8 +14,6 @@ Use Databricks Genie to answer RiverPay’s three operational questions against 
 2. Which customers drive the highest operational exception exposure in the last 24 hours?
 3. What is the RiverFlow lifecycle completion rate from initiation to completed status?
 
-(Phase 1 completion rate is a proxy: completed = 4-way join + FX enrichment / initiated_enriched. Stall drill-down is Phase 2.)
-
 ### Prerequisites
 
 Completed **[LAB 4](../LAB4_tableflow/LAB4.md)**. Have catalog, schema, and SQL warehouse ID from your credentials email.
