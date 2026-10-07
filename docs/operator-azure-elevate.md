@@ -123,6 +123,24 @@ cd ../azure
 terraform init && terraform apply
 ```
 
+## Automated validation (all accounts)
+
+After a build, validate the whole run read-only with the layered validators — no manual clicking:
+
+```bash
+# From the wsa repo. Tier 1 (provisioning/consistency) + Tier 3 (login) are generic WSA commands:
+op run --env-file=.env.tpl -- ./bin/wsa verify-accounts --run-id <run-id>
+./bin/wsa verify-login -w <spec> --accounts 1-<N>
+
+# Tier 2 (live CC + Databricks resources) + Tier 4 (data flow) are workshop-specific and compose
+# the final report from all three layers:
+op run --env-file=.env.tpl -- bash scripts/validate-run.sh --run-dir <wsa-output>/<run-id>
+```
+
+`validate-run.sh` reads each account's Terraform outputs, checks the Postgres CDC connector is `RUNNING`, all 14 Flink statements are healthy, the six `riverflow.*` topics exist, and each Databricks catalog + SQL warehouse is reachable — then writes `validation-report.md` combining WSA's `verify-*-results.json` with its own. It degrades any missing auth (`confluent login`, Databricks SP creds) to SKIPPED rather than false-failing. See the script header for details.
+
+The manual checklist below is still useful for the attendee *path* (labs) and for spot-checks.
+
 ## Smoke validation checklist (2 accounts)
 
 Before a large event:

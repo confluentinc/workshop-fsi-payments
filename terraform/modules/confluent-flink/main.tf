@@ -32,7 +32,11 @@ resource "confluent_flink_compute_pool" "main" {
   }
 
   timeouts {
-    create = "10m"
+    # eastus2 CFU allocation has been observed taking >10m under load; a tight
+    # timeout marks the pool tainted, so each WSA retry destroys and recreates
+    # it — restarting the clock and never getting past the timeout. Give the
+    # backend room to finish provisioning within a single apply.
+    create = "30m"
   }
 }
 
