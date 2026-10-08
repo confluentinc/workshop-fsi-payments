@@ -16,6 +16,15 @@ lifecycle topics + Postgres `customer_profiles` CDC + `fx_rates`). Only the **se
 scoring layer** changes, plus two optional narrative extras. Keeping it on a branch (and in
 this folder) isolates it from the workshop main and the instructor-led/self-service labs.
 
+## Architecture (on-prem — no Databricks / Genie / Tableflow)
+
+![On-prem V3 architecture](assets/architecture-onprem.svg)
+
+Decoupled: the **CI inference pipeline** (Streams → CP Flink → KServe / IBM Granite model → RiverPulse)
+scores exceptions in-stream; **Confluent Assistant** (NL→SQL) is a *separate* self-service tool on a
+**BYO LLM**. Ops (Sam) enables both. Editable source: [`assets/architecture-onprem.mmd`](assets/architecture-onprem.mmd).
+This replaces the workshop's Databricks/Genie diagram (`../../assets/architecture.png`), which the videos do **not** use.
+
 ## The four additive items (map to the storyboard)
 
 | Item | File | Status |

@@ -1,0 +1,31 @@
+%% Video 3 — On-prem AI (CP Flink): sovereign inference + NL self-service
+%% Source for architecture-onprem.svg. Render with mermaid (mermaid.live or mmdc).
+%% Matches Storyboard.md Video 3 — decoupled: CI inference pipeline vs. NL notebook.
+flowchart LR
+    subgraph OnPrem["RiverPay perimeter — on-prem (data + model never leave)"]
+        SAM["Sam — Flink ops"]
+        DANA["Dana — VP Payment Ops"]
+        ASSIST["Confluent Assistant<br/>(UI: SQL Chatbook, Preview)"]
+        FLINK["CP Flink pipeline (via CMF)"]
+        STREAMS[("CP Kafka — RiverFlow streams")]
+        KSERVE["KServe — IBM Granite model (CI)"]
+        PULSE[("RiverPulse — scored exceptions")]
+    end
+    subgraph EXT["Outside the boundary (optional)"]
+        LLM["BYO LLM (customer's choice)"]
+    end
+
+    %% inference (hero)
+    STREAMS --> FLINK
+    FLINK -->|AI_FORECAST / anomaly in-stream| KSERVE
+    FLINK -->|writes| PULSE
+
+    %% NL self-service
+    DANA --> ASSIST
+    ASSIST -->|drafts & runs SQL| FLINK
+    ASSIST -->|reads results| PULSE
+    ASSIST -.->|prompt only (BYO)| LLM
+
+    %% ops enablement
+    SAM -.->|register model + RBAC| KSERVE
+    SAM -.->|create env, BYO LLM, topics, RBAC| ASSIST
