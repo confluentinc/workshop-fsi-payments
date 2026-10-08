@@ -3,6 +3,19 @@
 Pre-provisioned Azure shared infra + per-attendee Confluent/Databricks.
 Attendees skip demo-mode credential/deploy labs and go straight to Flink, Tableflow, and Genie.
 
+> **Before you start — network access.** The Flink SQL Workspace talks to a
+> **separate host** from the Console (`flink.<region>.<cloud>.confluent.cloud`,
+> e.g. `flink.eastus2.azure.confluent.cloud`). Strict corporate VPNs / firewalls /
+> SSL-inspection proxies can block it, so the Console loads but the Workspace shows
+> **"Failed to fetch"** / **"The current Flink endpoint is not allowed to access the
+> statements."** This is a **network** issue, not your account or credentials.
+> - **On a corporate VPN/network and hitting this?** Switch to a **non-corporate
+>   network** (personal hotspot / guest Wi-Fi) or a personal device.
+> - **Operators:** send the requirements to the customer's IT **before** the event —
+>   allowlist `confluent.cloud` **and** the regional Flink host, and **exempt both
+>   from TLS/SSL inspection**. Details:
+>   [shared troubleshooting → Flink](../shared/troubleshooting.md#flink).
+
 ## Lab path
 
 | Lab | Focus | Est. |

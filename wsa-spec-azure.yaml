@@ -51,6 +51,12 @@ phases:
   - name: lifecycle-st
     scope: once
     path: terraform/azure-lifecycle-st/
+    # TODO(datagen-prominence): the workshop does not function without datagen,
+    # yet enabled:false makes wsa file this under "Phases that did not run" as if
+    # optional. Decide: flip to enabled:true so the trailing aggregator auto-runs
+    # at the end of build (interacts with the account_count/--accounts logic — see
+    # the IMPORTANT note above), or keep manual but treat the run as mandatory.
+    # Cross-repo context: workshop-setup-accelerator/roadmap/lifecycle-datagen-nextsteps.md
     enabled: false                                 # off by default; --phases lifecycle-st to run
     on_failure: warn                               # a failed aggregator must not fail the build
     # No enabled_var: the account module always emits lifecycle_st_cluster, and its

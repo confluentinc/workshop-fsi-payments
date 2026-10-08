@@ -96,6 +96,7 @@ and the aggregator root (`terraform/azure-lifecycle-st` vs `terraform/aws-lifecy
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
+| `Failed to fetch` + `The current Flink endpoint is not allowed to access the statements` in the SQL Workspace | **Client network blocking the regional Flink host** (corporate VPN / firewall / SSL-inspection). Console loads from `confluent.cloud`, but the Workspace calls `flink.<region>.<cloud>.confluent.cloud`. **Not** an IP filter / RBAC / build issue — the UI's "adjust IP filtering / network settings" hint is misleading. Tell: works in-room but fails for remote/VPN attendees; same account works from another network. | **Attendee:** switch to a non-corporate network (personal hotspot / guest Wi-Fi) or a personal device. **Operator (pre-event):** have customer IT allowlist `confluent.cloud` + the regional Flink host (e.g. `flink.eastus2.azure.confluent.cloud`) and **exempt from TLS/SSL inspection**. RCA: `workshop-setup-accelerator` → `RCAs/RCA-flink-failed-to-fetch-network.md`. |
 | Empty `risk_score` | Watermark / no join / UDF | Confirm initiation + profile topics; Risk API; wait 1–2 minutes |
 | Empty `riverflow_payments` | Incomplete lifecycle / FX miss | Need all four stages for same `payment_id` **and** FX rate for currency |
 | Statement failed | Topic/schema not ready | Re-run after CDC healthy; check Flink statement exceptions |
@@ -109,6 +110,7 @@ and the aggregator root (`terraform/azure-lifecycle-st` vs `terraform/aws-lifecy
 | Views missing | SQL statement retries exhausted | Re-run [`sql/riverpulse_views.sql`](../../sql/riverpulse_views.sql) manually in the workshop catalog.schema |
 | Genie empty | No data / wrong space | Validate Flink + Tableflow first; attach the workshop catalog/schema to the Genie space |
 | Destroy 409 on provider integration | Tableflow still holding integration (Confluent lag) | See [Provider integration 409](#provider-integration-409-on-destroy) below |
+| Build warns `⏳ Azure setup required` from `confluent_provider_integration_authorization.azure` (asks you to run `az ad sp create --id …`) | The Confluent provider prints this when it creates the ADLS provider integration, before the Azure SP exists — assuming manual setup. The `confluent_multi_tenant_app_id` is distinct per account. | **Benign — ignore; do NOT run `az ad sp create`.** `module "identity"` (`terraform/azure/main.tf` → `modules/azure-identity`) creates the SP for that same app ID and grants it **Storage Blob Data Contributor** on the storage account in the *same* apply (`depends_on = [module.tableflow]`). The warning is stale by end-of-apply. Attendee ADLS Tableflow (LAB4) works without it — confirmed across the `9bq3c`/`7yy9a`/`elv95` runs (warning in every account, zero materialization issues). |
 
 ## Provider integration 409 on destroy
 
